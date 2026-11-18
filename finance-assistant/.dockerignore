@@ -1,0 +1,10 @@
+.git
+.gitignore
+.venv
+.env
+.idea
+.ruff_cache
+__pycache__
+*.pyc
+run.log
+文档

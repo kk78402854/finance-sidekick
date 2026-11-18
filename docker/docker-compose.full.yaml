@@ -1,0 +1,149 @@
+# 全栈部署：MySQL + 金融中台 finance-data + 客服 finance-assistant
+#
+# 首次初始化数据（会 DROP 并重建 finance 库，只在首次或需要重置数据时执行）：
+#   docker compose -f docker/docker-compose.full.yaml --profile init run --rm finance-data-init
+#
+# 构建并启动：
+#   docker compose -f docker/docker-compose.full.yaml up -d --build
+#
+# 访问：
+#   网页客服   http://127.0.0.1:18083/
+#   客服接口   http://127.0.0.1:18083/docs
+#   中台接口   http://127.0.0.1:8000/docs
+#
+# 说明：
+# - 宿主机 3306 通常被本机 MySQL 占用，这里映射到 3307；8000 / 18083 若被本机进程占用需先停掉。
+# - 客服工程通过 FINANCE_API_BASE_URL=http://finance-data:8000 走容器内网访问中台。
+# - 大模型密钥来自 finance-assistant/.env（env_file），不写进镜像。
+# - 若想改模拟数据规模，可覆盖：GENERATE_PROFILE=smoke / full。
+
+name: finance-stack
+
+x-mysql-cred: &mysql-cred
+  MYSQL_ROOT_PASSWORD: "${MYSQL_ROOT_PASSWORD:-123456}"
+
+x-finance-env: &finance-env
+  DB_HOST: mysql
+  DB_PORT: "3306"
+  DB_USER: root
+  DB_PASSWORD: "${MYSQL_ROOT_PASSWORD:-123456}"
+  DB_NAME: finance
+  APP_PORT: "8000"
+  TZ: Asia/Shanghai
+
+services:
+  mysql:
+    image: "${MYSQL_IMAGE:-mysql:8.0}"
+    container_name: finance-mysql
+    restart: unless-stopped
+    environment:
+      <<: *mysql-cred
+      # 客服工程的库由 MySQL 启动时自动创建，表由客服服务启动时自动创建
+      MYSQL_DATABASE: finance_assistant
+      TZ: Asia/Shanghai
+    command:
+      - --default-authentication-plugin=mysql_native_password
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+    volumes:
+      - mysql-data:/var/lib/mysql
+    ports:
+      - "127.0.0.1:3307:3306"
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p$$MYSQL_ROOT_PASSWORD --silent"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 20s
+
+  # 一次性初始化：建 finance 库 + 导入表结构 + 生成业务数据
+  finance-data-init:
+    profiles: ["init"]
+    image: finance-data:local
+    build:
+      context: ..
+      dockerfile: Dockerfile
+      args:
+        BASE_IMAGE: ${PYTHON_IMAGE:-python:3.12-slim}
+        PIP_INDEX_URL: ${PIP_INDEX_URL:-https://pypi.tuna.tsinghua.edu.cn/simple}
+    environment:
+      <<: *finance-env
+    command:
+      - sh
+      - -c
+      - python init_db.py && python -m generate.main --profile ${GENERATE_PROFILE:-full}
+    depends_on:
+      mysql:
+        condition: service_healthy
+    restart: "no"
+
+  finance-data:
+    image: finance-data:local
+    build:
+      context: ..
+      dockerfile: Dockerfile
+      args:
+        BASE_IMAGE: ${PYTHON_IMAGE:-python:3.12-slim}
+        PIP_INDEX_URL: ${PIP_INDEX_URL:-https://pypi.tuna.tsinghua.edu.cn/simple}
+    container_name: finance-data
+    restart: unless-stopped
+    environment:
+      <<: *finance-env
+    ports:
+      - "8000:8000"
+    depends_on:
+      mysql:
+        condition: service_healthy
+    # 健康检查同时验证进程与数据库，未初始化数据时会显示 unhealthy
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import os,urllib.request,pymysql; pymysql.connect(host=os.environ['DB_HOST'], port=int(os.environ['DB_PORT']), user=os.environ['DB_USER'], password=os.environ['DB_PASSWORD'], database=os.environ['DB_NAME']).close(); urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=3)"
+      interval: 10s
+      timeout: 8s
+      retries: 12
+      start_period: 20s
+
+  finance-assistant:
+    image: finance-assistant:local
+    build:
+      context: ../finance-assistant
+      dockerfile: Dockerfile
+      args:
+        BASE_IMAGE: ${PYTHON_IMAGE:-python:3.12-slim}
+        PIP_INDEX_URL: ${PIP_INDEX_URL:-https://pypi.tuna.tsinghua.edu.cn/simple}
+    container_name: finance-assistant
+    restart: unless-stopped
+    env_file:
+      - ../finance-assistant/.env
+    environment:
+      # 容器内网访问中台，覆盖 .env 里的 127.0.0.1
+      FINANCE_API_BASE_URL: http://finance-data:8000
+      DATABASE_URL: mysql+aiomysql://root:${MYSQL_ROOT_PASSWORD:-123456}@mysql:3306/finance_assistant?charset=utf8mb4
+      # 门户管理端只读查询中台业务库
+      FINANCE_DB_URL: mysql+aiomysql://root:${MYSQL_ROOT_PASSWORD:-123456}@mysql:3306/finance?charset=utf8mb4
+      APP_HOST: 0.0.0.0
+      APP_PORT: "18083"
+      TZ: Asia/Shanghai
+    ports:
+      - "18083:18083"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      finance-data:
+        condition: service_healthy
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request;urllib.request.urlopen('http://127.0.0.1:18083/docs', timeout=3)"
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+
+volumes:
+  mysql-data:

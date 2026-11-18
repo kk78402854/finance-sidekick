@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>我的交易 · 金融小二</title>
+<link rel="stylesheet" href="/static/assets/app.css" />
+</head>
+<body data-role="customer" data-page="transactions"
+      data-title="我的交易" data-subtitle="按账户、时间与类型查询交易流水">
+<div class="app">
+  <aside class="sidebar" id="sidebar"></aside>
+  <div class="main">
+    <header class="topbar" id="topbar"></header>
+    <section class="page">
+      <div class="page-head">
+        <div>
+          <h1>我的交易</h1>
+          <div class="sub">数据来自中台交易查询接口，仅返回当前客户可访问的账户</div>
+        </div>
+        <div class="spacer"></div>
+        <a class="btn" href="/customer/accounts">返回账户列表</a>
+      </div>
+
+      <div class="card">
+        <div class="toolbar">
+          <div class="field" style="min-width:220px">
+            <label>账户</label>
+            <select id="accountSelect"></select>
+          </div>
+          <div class="field">
+            <label>开始日期</label>
+            <input type="date" id="startDate" />
+          </div>
+          <div class="field">
+            <label>结束日期</label>
+            <input type="date" id="endDate" />
+          </div>
+          <div class="field" style="min-width:150px">
+            <label>交易类型</label>
+            <select id="typeSelect"></select>
+          </div>
+          <button class="btn btn-primary" id="search">查询</button>
+        </div>
+        <div id="table"><div class="loading">加载中</div></div>
+        <div class="pager" id="pager"></div>
+      </div>
+    </section>
+  </div>
+</div>
+
+<script src="/static/assets/api.js"></script>
+<script src="/static/assets/nav.js"></script>
+<script>
+(async function () {
+  await FA.ensureIdentity();
+  const accountEl = document.getElementById("accountSelect");
+  const typeEl = document.getElementById("typeSelect");
+  const startEl = document.getElementById("startDate");
+  const endEl = document.getElementById("endDate");
+  const tableEl = document.getElementById("table");
+  const pagerEl = document.getElementById("pager");
+  let pageNo = 1;
+  const pageSize = 20;
+
+  typeEl.innerHTML = '<option value="">全部类型</option>' +
+    Object.entries(FA.labels.transactionType)
+      .map(([value, label]) => `<option value="${value}">${label}</option>`)
+      .join("");
+
+  const today = new Date();
+  const past = new Date();
+  past.setDate(today.getDate() - 30);
+  endEl.value = today.toISOString().slice(0, 10);
+  startEl.value = past.toISOString().slice(0, 10);
+
+  async function loadAccounts() {
+    const data = await FA.get("/api/portal/accounts");
+    const items = data.items || [];
+    if (!items.length) {
+      accountEl.innerHTML = '<option value="">暂无账户</option>';
+      return;
+    }
+    accountEl.innerHTML = items.map((item) => `<option value="${item.account_no}">
+      ${FA.escapeHtml(item.account_no)} · ${FA.escapeHtml(item.product_name || "")}
+    </option>`).join("");
+    const preset = new URLSearchParams(location.search).get("account_no");
+    if (preset && items.some((i) => i.account_no === preset)) accountEl.value = preset;
+  }
+
+  async function load() {
+    if (!accountEl.value) {
+      tableEl.innerHTML = '<div class="empty"><strong>暂无可查询账户</strong></div>';
+      pagerEl.innerHTML = "";
+      return;
+    }
+    tableEl.innerHTML = '<div class="loading">加载中</div>';
+    try {
+      const data = await FA.get(
+        `/api/portal/accounts/${encodeURIComponent(accountEl.value)}/transactions`,
+        {
+          page_no: pageNo,
+          page_size: pageSize,
+          start_time: startEl.value ? startEl.value + "T00:00:00" : "",
+          end_time: endEl.value ? endEl.value + "T23:59:59" : "",
+          transaction_type: typeEl.value,
+        }
+      );
+      renderTable(data.items || []);
+      FA.renderPager(pagerEl, {
+        pageNo,
+        pageSize,
+        total: data.total || 0,
+        onChange: (next) => {
+          pageNo = next;
+          load();
+        },
+      });
+    } catch (err) {
+      FA.showError(tableEl, err);
+      pagerEl.innerHTML = "";
+    }
+  }
+
+  function renderTable(items) {
+    if (!items.length) {
+      tableEl.innerHTML = '<div class="empty"><strong>该时间段没有交易</strong>可以扩大日期范围或切换账户再试</div>';
+      return;
+    }
+    tableEl.innerHTML = `<div class="table-wrap"><table>
+      <thead><tr>
+        <th>交易时间</th><th>交易号</th><th>类型</th><th>状态</th>
+        <th class="num">金额</th><th>币种</th><th>对方</th><th>商户</th>
+      </tr></thead>
+      <tbody>${items.map((item) => `<tr>
+        <td>${FA.fmtDateTime(item.transaction_at)}</td>
+        <td class="mono">${FA.escapeHtml(item.transaction_no)}</td>
+        <td>${FA.escapeHtml(FA.labels.transactionType[item.transaction_type] || item.transaction_type)}</td>
+        <td>${FA.badge(item.transaction_status, { success: "成功", failed: "失败", processing: "处理中", reversed: "已冲正" }, item.transaction_status === "success" ? "green" : "")}</td>
+        <td class="num">${FA.fmtMoney(item.transaction_amount)}</td>
+        <td>${FA.escapeHtml(item.currency_code || "CNY")}</td>
+        <td>${FA.escapeHtml(item.counterparty_name || "-")}</td>
+        <td>${FA.escapeHtml(item.merchant_name || "-")}</td>
+      </tr>`).join("")}</tbody></table></div>`;
+  }
+
+  document.getElementById("search").addEventListener("click", () => {
+    pageNo = 1;
+    load();
+  });
+  accountEl.addEventListener("change", () => {
+    pageNo = 1;
+    load();
+  });
+
+  try {
+    await loadAccounts();
+    await load();
+  } catch (err) {
+    FA.showError(tableEl, err);
+  }
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>客户详情 · 金融小二</title>
+<link rel="stylesheet" href="/static/assets/app.css" />
+</head>
+<body data-role="admin" data-page="customers"
+      data-title="客户详情" data-subtitle="档案、账户、授信、交易与工单聚合视图">
+<div class="app">
+  <aside class="sidebar" id="sidebar"></aside>
+  <div class="main">
+    <header class="topbar" id="topbar"></header>
+    <section class="page">
+      <div class="page-head">
+        <div>
+          <h1 id="pageTitle">客户详情</h1>
+          <div class="sub" id="pageSub">按客户号聚合中台各业务模块</div>
+        </div>
+        <div class="spacer"></div>
+        <a class="btn" href="/admin/customers">返回列表</a>
+      </div>
+
+      <div id="content"><div class="loading">加载中</div></div>
+    </section>
+  </div>
+</div>
+
+<script src="/static/assets/api.js"></script>
+<script src="/static/assets/nav.js"></script>
+<script>
+(async function () {
+  await FA.ensureIdentity();
+  const contentEl = document.getElementById("content");
+  const customerNo = new URLSearchParams(location.search).get("customer_no");
+
+  if (!customerNo) {
+    contentEl.innerHTML = '<div class="card"><div class="empty"><strong>缺少客户号</strong>请从客户列表进入详情页</div></div>';
+    return;
+  }
+
+  try {
+    const data = await FA.get("/api/portal/admin/customers/" + encodeURIComponent(customerNo));
+    render(data);
+  } catch (err) {
+    FA.showError(contentEl, err);
+  }
+
+  function render(data) {
+    const profile = data.profile.customer_profile || {};
+    const accounts = data.accounts || [];
+    const limits = data.credit_limits || [];
+    const transactions = data.transactions || [];
+    const loans = data.loan_applications || [];
+    const tickets = data.tickets || [];
+    const totalBalance = accounts.reduce((sum, i) => sum + Number(i.balance_amount || 0), 0);
+    const availableLimit = limits.reduce((sum, i) => sum + Number(i.available_limit_amount || 0), 0);
+
+    document.getElementById("pageTitle").textContent = profile.customer_name || customerNo;
+    const kycLabel = FA.labels.kycStatus[data.profile.kyc_status] || data.profile.kyc_status || "KYC 未知";
+    document.getElementById("pageSub").textContent = customerNo + " · " + kycLabel;
+
+    contentEl.innerHTML = `
+      <div class="grid grid-4 mb-16">
+        ${stat("账户数量", accounts.length, `合计余额 ¥ ${FA.fmtMoney(totalBalance)}`)}
+        ${stat("可用授信", "¥ " + FA.fmtMoney(availableLimit), `共 ${limits.length} 笔额度`, true)}
+        ${stat("贷款申请", loans.length, "最近 5 笔")}
+        ${stat("客户工单", tickets.length, "最近 5 条")}
+      </div>
+
+      <div class="grid grid-main mb-16">
+        <div class="card">
+          <div class="card-head"><h3>客户档案</h3><span class="spacer"></span>
+            ${FA.badge(profile.customer_status, FA.labels.customerStatus)}
+          </div>
+          <div class="card-body">
+            <dl class="kv">
+              <dt>客户号</dt><dd class="mono">${FA.escapeHtml(profile.customer_no)}</dd>
+              <dt>客户姓名</dt><dd>${FA.escapeHtml(profile.customer_name)}</dd>
+              <dt>客户类型</dt><dd>${profile.customer_type === "personal" ? "个人客户" : FA.escapeHtml(profile.customer_type || "-")}</dd>
+              <dt>风险等级</dt><dd>${FA.escapeHtml((data.profile.risk_level || {}).risk_level_name || "-")}</dd>
+              <dt>KYC 状态</dt><dd>${FA.escapeHtml(FA.labels.kycStatus[data.profile.kyc_status] || data.profile.kyc_status || "-")}</dd>
+              <dt>开户时间</dt><dd>${FA.fmtDateTime(profile.opened_at)}</dd>
+            </dl>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-head"><h3>授信额度</h3></div>
+          ${limits.length ? `<div class="card-body" style="display:grid;gap:10px">
+            ${limits.map((item) => `<div style="border:1px solid var(--line);border-radius:4px;padding:10px 12px">
+              <div style="display:flex;gap:8px;align-items:center">
+                <b>${FA.escapeHtml(item.product_name || item.product_code)}</b>
+                ${FA.badge(item.limit_status, { active: "生效中", frozen: "冻结", expired: "已过期", closed: "已关闭" })}
+              </div>
+              <div class="field-hint" style="margin-top:4px">
+                总额度 ¥${FA.fmtMoney(item.total_limit_amount)} ·
+                可用 ¥${FA.fmtMoney(item.available_limit_amount)} ·
+                已用 ¥${FA.fmtMoney(item.used_limit_amount)}
+              </div>
+            </div>`).join("")}
+          </div>` : '<div class="empty"><strong>暂无授信</strong></div>'}
+        </div>
+      </div>
+
+      ${cardTable("账户", ["账户号", "产品", "状态", "余额", "可用"], accounts.map((item) => [
+        `<span class="mono">${FA.escapeHtml(item.account_no)}</span>`,
+        FA.escapeHtml(item.product_name || "-"),
+        FA.badge(item.account_status, FA.labels.accountStatus),
+        "¥ " + FA.fmtMoney(item.balance_amount),
+        "¥ " + FA.fmtMoney(item.available_amount),
+      ]), "暂无账户")}
+
+      ${cardTable("最近交易", ["时间", "交易号", "类型", "金额", "对方"], transactions.map((item) => [
+        FA.fmtDateTime(item.transaction_at),
+        `<span class="mono">${FA.escapeHtml(item.transaction_no)}</span>`,
+        FA.escapeHtml(FA.labels.transactionType[item.transaction_type] || item.transaction_type),
+        "¥ " + FA.fmtMoney(item.transaction_amount),
+        FA.escapeHtml(item.counterparty_name || item.merchant_name || "-"),
+      ]), "暂无交易记录")}
+
+      ${cardTable("贷款申请", ["申请编号", "产品", "金额", "状态", "提交时间"], loans.map((item) => [
+        `<span class="mono">${FA.escapeHtml(item.application_no)}</span>`,
+        FA.escapeHtml(item.product_name),
+        "¥ " + FA.fmtMoney(item.apply_amount),
+        FA.badge(item.application_status, FA.labels.loanStatus),
+        FA.fmtDate(item.submitted_at),
+      ]), "暂无贷款申请")}
+
+      ${cardTable("工单", ["工单号", "类型", "标题", "状态", "提交时间"], tickets.map((item) => [
+        `<span class="mono">${FA.escapeHtml(item.ticket_no)}</span>`,
+        FA.escapeHtml(FA.labels.ticketType[item.ticket_type] || item.ticket_type),
+        FA.escapeHtml(item.ticket_title),
+        FA.badge(item.ticket_status, FA.labels.ticketStatus),
+        FA.fmtDate(item.submitted_at),
+      ]), "暂无工单")}`;
+  }
+
+  function stat(label, value, sub, small) {
+    return `<div class="card stat">
+      <div class="stat-label">${label}</div>
+      <div class="stat-value${small ? " small" : ""}">${value}</div>
+      <div class="stat-sub">${sub || ""}</div>
+    </div>`;
+  }
+
+  function cardTable(title, headers, rows, emptyText) {
+    if (!rows.length) {
+      return `<div class="card mb-16"><div class="card-head"><h3>${title}</h3></div>
+        <div class="empty"><strong>${emptyText}</strong></div></div>`;
+    }
+    return `<div class="card mb-16">
+      <div class="card-head"><h3>${title}</h3></div>
+      <div class="table-wrap"><table>
+        <thead><tr>${headers.map((h, i) => `<th${i >= 3 ? ' class="num"' : ""}>${h}</th>`).join("")}</tr></thead>
+        <tbody>${rows.map((cells) => `<tr>${cells
+          .map((cell, i) => `<td${i >= 3 ? ' class="num"' : ""}>${cell}</td>`)
+          .join("")}</tr>`).join("")}</tbody>
+      </table></div>
+    </div>`;
+  }
+})();
+</script>
+</body>
+</html>

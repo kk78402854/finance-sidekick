@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>我的信息 · 金融小二</title>
+<link rel="stylesheet" href="/static/assets/app.css" />
+</head>
+<body data-role="customer" data-page="profile"
+      data-title="我的信息" data-subtitle="客户档案、风险等级与业务概览">
+<div class="app">
+  <aside class="sidebar" id="sidebar"></aside>
+  <div class="main">
+    <header class="topbar" id="topbar"></header>
+    <section class="page">
+      <div class="page-head">
+        <div>
+          <h1>我的信息</h1>
+          <div class="sub">当前客户号下的档案与业务汇总</div>
+        </div>
+        <div class="spacer"></div>
+        <a class="btn" href="/customer/accounts">查看账户</a>
+      </div>
+
+      <div class="grid grid-4 mb-16" id="summary"></div>
+
+      <div class="grid grid-main mb-16">
+        <div class="card">
+          <div class="card-head"><h3>客户档案</h3><span class="spacer"></span><span id="statusBadge"></span></div>
+          <div class="card-body" id="profileBody"><div class="loading">加载中</div></div>
+        </div>
+        <div class="card">
+          <div class="card-head"><h3>风险与合规</h3></div>
+          <div class="card-body">
+            <dl class="kv">
+              <dt>风险等级</dt><dd id="riskLevel">-</dd>
+              <dt>KYC 状态</dt><dd id="kycStatus">-</dd>
+              <dt>客户状态</dt><dd id="customerStatusText">-</dd>
+            </dl>
+            <p class="field-hint" style="margin-top:12px">
+              以上信息来自中台客户接口，按当前客户号鉴权，不能跨客户读取。
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid grid-2">
+        <div class="card">
+          <div class="card-head"><h3>最近贷款申请</h3><span class="spacer"></span>
+            <a class="btn btn-sm btn-ghost" href="/customer/credit-loans">全部</a>
+          </div>
+          <div id="loanList"><div class="loading">加载中</div></div>
+        </div>
+        <div class="card">
+          <div class="card-head"><h3>最近工单</h3><span class="spacer"></span>
+            <a class="btn btn-sm btn-ghost" href="/customer/tickets">全部</a>
+          </div>
+          <div id="ticketList"><div class="loading">加载中</div></div>
+        </div>
+      </div>
+    </section>
+  </div>
+</div>
+
+<script src="/static/assets/api.js"></script>
+<script src="/static/assets/nav.js"></script>
+<script>
+(async function () {
+  await FA.ensureIdentity();
+  const summaryEl = document.getElementById("summary");
+  const bodyEl = document.getElementById("profileBody");
+
+  try {
+    const data = await FA.get("/api/portal/me");
+    const p = data.profile.customer_profile || {};
+    const s = data.summary;
+
+    summaryEl.innerHTML = `
+      <div class="card stat"><div class="stat-label">账户数量</div><div class="stat-value">${s.account_count}</div><div class="stat-sub">含正常与冻结账户</div></div>
+      <div class="card stat"><div class="stat-label">存款总余额</div><div class="stat-value small">¥ ${FA.fmtMoney(s.total_balance)}</div><div class="stat-sub">全部账户余额合计</div></div>
+      <div class="card stat"><div class="stat-label">可用授信</div><div class="stat-value small">¥ ${FA.fmtMoney(s.available_limit)}</div><div class="stat-sub">可用于贷款申请的额度</div></div>
+      <div class="card stat"><div class="stat-label">业务记录</div><div class="stat-value">${s.loan_count} <span style="font-size:13px;font-weight:400;color:var(--text-400)">笔贷款</span></div><div class="stat-sub">${s.ticket_count} 条工单</div></div>`;
+
+    document.getElementById("statusBadge").innerHTML = FA.badge(p.customer_status, FA.labels.customerStatus);
+    document.getElementById("customerStatusText").innerHTML = FA.badge(p.customer_status, FA.labels.customerStatus);
+    const risk = data.profile.risk_level;
+    document.getElementById("riskLevel").textContent = risk ? (risk.risk_level_name || risk.risk_level_code) : "-";
+    document.getElementById("kycStatus").textContent =
+      FA.labels.kycStatus[data.profile.kyc_status] || data.profile.kyc_status || "-";
+
+    bodyEl.innerHTML = `
+      <dl class="kv">
+        <dt>客户号</dt><dd class="mono">${FA.escapeHtml(p.customer_no)}</dd>
+        <dt>客户姓名</dt><dd>${FA.escapeHtml(p.customer_name)}</dd>
+        <dt>客户类型</dt><dd>${p.customer_type === "personal" ? "个人客户" : FA.escapeHtml(p.customer_type || "-")}</dd>
+        <dt>开户时间</dt><dd>${FA.fmtDateTime(p.opened_at)}</dd>
+        <dt>注册渠道</dt><dd>${FA.escapeHtml(p.register_channel_id ? "渠道 ID " + p.register_channel_id : "-")}</dd>
+        <dt>所属机构</dt><dd>${FA.escapeHtml(p.branch_id ? "机构 ID " + p.branch_id : "-")}</dd>
+      </dl>`;
+
+    renderLoans(data.recent_loans || []);
+    renderTickets(data.recent_tickets || []);
+  } catch (err) {
+    FA.showError(bodyEl, err);
+  }
+
+  function renderLoans(items) {
+    const el = document.getElementById("loanList");
+    if (!items.length) {
+      el.innerHTML = '<div class="empty"><strong>暂无贷款申请</strong>可前往“授信与贷款”发起申请</div>';
+      return;
+    }
+    el.innerHTML = `<div class="table-wrap"><table><thead><tr>
+        <th>申请编号</th><th>金额</th><th>状态</th><th>提交时间</th>
+      </tr></thead><tbody>${items.map((item) => `<tr>
+        <td class="mono">${FA.escapeHtml(item.application_no)}</td>
+        <td class="num">¥ ${FA.fmtMoney(item.apply_amount)}</td>
+        <td>${FA.badge(item.application_status, FA.labels.loanStatus)}</td>
+        <td>${FA.fmtDate(item.submitted_at)}</td>
+      </tr>`).join("")}</tbody></table></div>`;
+  }
+
+  function renderTickets(items) {
+    const el = document.getElementById("ticketList");
+    if (!items.length) {
+      el.innerHTML = '<div class="empty"><strong>暂无工单</strong>可在“我的工单”提交投诉或挂失</div>';
+      return;
+    }
+    el.innerHTML = `<div class="table-wrap"><table><thead><tr>
+        <th>工单号</th><th>标题</th><th>状态</th><th>提交时间</th>
+      </tr></thead><tbody>${items.map((item) => `<tr>
+        <td class="mono">${FA.escapeHtml(item.ticket_no)}</td>
+        <td>${FA.escapeHtml(item.ticket_title)}</td>
+        <td>${FA.badge(item.ticket_status, FA.labels.ticketStatus)}</td>
+        <td>${FA.fmtDate(item.submitted_at)}</td>
+      </tr>`).join("")}</tbody></table></div>`;
+  }
+})();
+</script>
+</body>
+</html>

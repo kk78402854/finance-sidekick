@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>我的账户 · 金融小二</title>
+<link rel="stylesheet" href="/static/assets/app.css" />
+</head>
+<body data-role="customer" data-page="accounts"
+      data-title="我的账户" data-subtitle="账户状态、余额与可用金额">
+<div class="app">
+  <aside class="sidebar" id="sidebar"></aside>
+  <div class="main">
+    <header class="topbar" id="topbar"></header>
+    <section class="page">
+      <div class="page-head">
+        <div>
+          <h1>我的账户</h1>
+          <div class="sub">点击账户行可查看该账户的交易流水</div>
+        </div>
+        <div class="spacer"></div>
+      </div>
+
+      <div class="grid grid-4 mb-16" id="summary"></div>
+
+      <div class="card">
+        <div class="toolbar">
+          <div class="field" style="min-width:160px">
+            <label>账户状态</label>
+            <select id="statusFilter">
+              <option value="">全部状态</option>
+              <option value="active">正常</option>
+              <option value="frozen">已冻结</option>
+              <option value="closed">已销户</option>
+            </select>
+          </div>
+          <span class="spacer"></span>
+          <button class="btn btn-sm" id="refresh">刷新</button>
+        </div>
+        <div id="table"><div class="loading">加载中</div></div>
+      </div>
+    </section>
+  </div>
+</div>
+
+<script src="/static/assets/api.js"></script>
+<script src="/static/assets/nav.js"></script>
+<script>
+(async function () {
+  await FA.ensureIdentity();
+  const tableEl = document.getElementById("table");
+  const summaryEl = document.getElementById("summary");
+  const statusEl = document.getElementById("statusFilter");
+
+  async function load() {
+    tableEl.innerHTML = '<div class="loading">加载中</div>';
+    try {
+      const data = await FA.get("/api/portal/accounts", {
+        account_status: statusEl.value,
+      });
+      const items = data.items || [];
+      renderSummary(items);
+      renderTable(items);
+    } catch (err) {
+      FA.showError(tableEl, err);
+    }
+  }
+
+  function renderSummary(items) {
+    const total = items.reduce((sum, i) => sum + Number(i.balance_amount || 0), 0);
+    const available = items.reduce((sum, i) => sum + Number(i.available_amount || 0), 0);
+    const frozen = items.reduce((sum, i) => sum + Number(i.frozen_amount || 0), 0);
+    summaryEl.innerHTML = `
+      <div class="card stat"><div class="stat-label">账户数量</div><div class="stat-value">${items.length}</div><div class="stat-sub">当前筛选结果</div></div>
+      <div class="card stat"><div class="stat-label">账户总余额</div><div class="stat-value small">¥ ${FA.fmtMoney(total)}</div></div>
+      <div class="card stat"><div class="stat-label">可用余额</div><div class="stat-value small">¥ ${FA.fmtMoney(available)}</div></div>
+      <div class="card stat"><div class="stat-label">冻结金额</div><div class="stat-value small">¥ ${FA.fmtMoney(frozen)}</div></div>`;
+  }
+
+  function renderTable(items) {
+    if (!items.length) {
+      tableEl.innerHTML = '<div class="empty"><strong>没有符合条件的账户</strong>请更换筛选条件后重试</div>';
+      return;
+    }
+    tableEl.innerHTML = `<div class="table-wrap"><table>
+      <thead><tr>
+        <th>账户号</th><th>账户产品</th><th>类型</th><th>状态</th>
+        <th class="num">余额</th><th class="num">可用</th><th class="num">冻结</th>
+        <th>开户日期</th><th></th>
+      </tr></thead>
+      <tbody>${items.map((item) => `<tr>
+        <td class="mono">${FA.escapeHtml(item.account_no)}</td>
+        <td class="strong">${FA.escapeHtml(item.product_name || "-")}</td>
+        <td>${FA.escapeHtml(item.account_type || "-")}</td>
+        <td>${FA.badge(item.account_status, FA.labels.accountStatus)}</td>
+        <td class="num">${FA.fmtMoney(item.balance_amount)}</td>
+        <td class="num">${FA.fmtMoney(item.available_amount)}</td>
+        <td class="num">${FA.fmtMoney(item.frozen_amount)}</td>
+        <td>${FA.fmtDate(item.opened_at)}</td>
+        <td><a class="btn btn-sm btn-ghost" href="/customer/transactions?account_no=${encodeURIComponent(item.account_no)}">流水</a></td>
+      </tr>`).join("")}</tbody></table></div>`;
+  }
+
+  statusEl.addEventListener("change", load);
+  document.getElementById("refresh").addEventListener("click", load);
+  load();
+})();
+</script>
+</body>
+</html>

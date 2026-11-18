@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>AI 对话助手 · 金融小二</title>
+<link rel="stylesheet" href="/static/assets/app.css" />
+</head>
+<body data-role="customer" data-page="chat"
+      data-title="AI 对话助手" data-subtitle="自然语言办理账户、交易、贷款、挂失与工单">
+<div class="app">
+  <aside class="sidebar" id="sidebar"></aside>
+  <div class="main">
+    <header class="topbar" id="topbar"></header>
+    <section class="page">
+      <div class="chat-shell">
+        <div class="card chat-card">
+          <div class="card-head">
+            <h3>智能客服</h3>
+            <span class="badge badge-green badge-plain" id="connBadge">已连接</span>
+            <span class="spacer"></span>
+            <button class="btn btn-sm" id="btnNew">新会话</button>
+          </div>
+          <div class="chat-body" id="chat"></div>
+          <div class="chat-input">
+            <textarea id="input" rows="1" placeholder="请输入问题，Enter 发送，Shift + Enter 换行"></textarea>
+            <button class="btn btn-primary" id="send">发送</button>
+          </div>
+        </div>
+
+        <aside>
+          <div class="card mb-16">
+            <div class="card-head"><h3>快捷提问</h3></div>
+            <div class="card-body">
+              <div class="quick-list" id="quick">
+                <button class="quick-item">帮我查一下余额</button>
+                <button class="quick-item">查最近的交易流水</button>
+                <button class="quick-item">你们有哪些贷款产品？</button>
+                <button class="quick-item">我要申请消费贷款 30000 元 12 期</button>
+                <button class="quick-item">我的信用卡丢了要挂失</button>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-head"><h3>当前会话</h3></div>
+            <div class="card-body">
+              <dl class="kv">
+                <dt>客户号</dt><dd id="sessionCustomer">-</dd>
+                <dt>会话 ID</dt><dd id="sessionId" class="mono">-</dd>
+              </dl>
+              <p class="field-hint" style="margin-top:10px">
+                切换顶栏客户号后，对话中的查询与办理都会改用新身份。
+              </p>
+            </div>
+          </div>
+        </aside>
+      </div>
+    </section>
+  </div>
+</div>
+
+<script src="/static/assets/api.js"></script>
+<script src="/static/assets/nav.js"></script>
+<script>
+(function () {
+  const chatEl = document.getElementById("chat");
+  const inputEl = document.getElementById("input");
+  const sendEl = document.getElementById("send");
+  const badgeEl = document.getElementById("connBadge");
+  let busy = false;
+  let senderId = "";
+  let customerNo = "";
+
+  function esc(value) {
+    return FA.escapeHtml(value);
+  }
+
+  // 轻量渲染：**粗体**、- 列表，其余保留换行
+  function render(text) {
+    const lines = String(text || "").split("\n");
+    let html = "";
+    let inList = false;
+    const inline = (s) => esc(s).replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+    lines.forEach((line) => {
+      const isItem = /^\s*-\s+/.test(line);
+      if (isItem && !inList) { html += "<ul>"; inList = true; }
+      if (!isItem && inList) { html += "</ul>"; inList = false; }
+      if (isItem) html += "<li>" + inline(line.replace(/^\s*-\s+/, "")) + "</li>";
+      else if (line.trim()) html += "<div>" + inline(line) + "</div>";
+    });
+    if (inList) html += "</ul>";
+    return html || "<div></div>";
+  }
+
+  function scrollBottom() {
+    chatEl.scrollTop = chatEl.scrollHeight;
+  }
+
+  function addMessage(role, text, object, opts) {
+    const row = document.createElement("div");
+    row.className = "msg " + (role === "user" ? "user" : "bot");
+
+    const avatar = document.createElement("div");
+    avatar.className = "avatar";
+    avatar.textContent = role === "user" ? "我" : "AI";
+
+    const bubble = document.createElement("div");
+    bubble.className = "bubble";
+    if (opts && opts.typing) {
+      bubble.innerHTML = '<span class="typing"><span></span><span></span><span></span></span>';
+    } else {
+      bubble.innerHTML = render(text);
+    }
+
+    if (object && object.id) {
+      const card = document.createElement("div");
+      card.className = "card";
+      card.style.marginTop = "10px";
+      card.innerHTML =
+        '<div class="card-head"><h3>' + esc(object.title || object.type || "对象") + "</h3></div>" +
+        '<div class="card-body" style="padding:10px 16px">' +
+        '<div class="mono" style="color:var(--text-500);font-size:12px">' + esc(object.id) + "</div></div>";
+      const btn = document.createElement("button");
+      btn.className = "btn btn-sm btn-primary";
+      btn.style.margin = "0 16px 12px";
+      btn.textContent = "选择这个" + (object.type === "account" ? "账户" : "对象");
+      btn.onclick = () => sendObject(object);
+      card.appendChild(btn);
+      bubble.appendChild(card);
+    }
+
+    row.appendChild(avatar);
+    row.appendChild(bubble);
+    chatEl.appendChild(row);
+    scrollBottom();
+    return row;
+  }
+
+  function setStatus(ok) {
+    badgeEl.className = "badge badge-plain " + (ok ? "badge-green" : "badge-red");
+    badgeEl.textContent = ok ? "已连接" : "连接失败";
+  }
+
+  async function postChat(body) {
+    const resp = await fetch("/api/chat", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Customer-No": customerNo,
+      },
+      body: JSON.stringify(body),
+    });
+    if (!resp.ok) throw new Error("HTTP " + resp.status);
+    return resp.json();
+  }
+
+  function resolveSenderId() {
+    const key = "fa_sender_" + customerNo;
+    let value = localStorage.getItem(key);
+    if (!value) {
+      value = "web_" + customerNo.toLowerCase();
+      localStorage.setItem(key, value);
+    }
+    return value;
+  }
+
+  function refreshSessionLabel() {
+    document.getElementById("sessionCustomer").textContent = customerNo;
+    document.getElementById("sessionId").textContent = senderId;
+  }
+
+  async function sendText(text) {
+    if (busy || !text.trim()) return;
+    busy = true;
+    sendEl.disabled = true;
+    addMessage("user", text);
+    const typingRow = addMessage("bot", "", null, { typing: true });
+    try {
+      const data = await postChat({
+        sender_id: senderId,
+        customer_no: customerNo,
+        text: text,
+      });
+      typingRow.remove();
+      (data.messages || []).forEach((m) => addMessage("bot", m.text, m.object));
+      setStatus(true);
+    } catch (err) {
+      typingRow.remove();
+      addMessage("bot", "请求失败：" + err.message + "，请确认后端服务已启动。");
+      setStatus(false);
+    } finally {
+      busy = false;
+      sendEl.disabled = false;
+      inputEl.focus();
+    }
+  }
+
+  async function sendObject(object) {
+    if (busy) return;
+    busy = true;
+    sendEl.disabled = true;
+    addMessage("user", "【已选择】" + (object.title || object.type) + " " + object.id);
+    const typingRow = addMessage("bot", "", null, { typing: true });
+    try {
+      const data = await postChat({
+        sender_id: senderId,
+        customer_no: customerNo,
+        object: {
+          type: object.type,
+          id: object.id,
+          title: object.title || null,
+          attributes: object.attributes || {},
+        },
+      });
+      typingRow.remove();
+      (data.messages || []).forEach((m) => addMessage("bot", m.text, m.object));
+      setStatus(true);
+    } catch (err) {
+      typingRow.remove();
+      addMessage("bot", "请求失败：" + err.message);
+      setStatus(false);
+    } finally {
+      busy = false;
+      sendEl.disabled = false;
+    }
+  }
+
+  function submit() {
+    const text = inputEl.value.trim();
+    if (!text) return;
+    inputEl.value = "";
+    autoSize();
+    sendText(text);
+  }
+
+  function autoSize() {
+    inputEl.style.height = "auto";
+    inputEl.style.height = Math.min(inputEl.scrollHeight, 120) + "px";
+  }
+
+  async function loadHistory() {
+    try {
+      const resp = await fetch(
+        "/api/chat/history?sender_id=" + encodeURIComponent(senderId)
+      );
+      if (!resp.ok) throw new Error("HTTP " + resp.status);
+      const data = await resp.json();
+      const messages = data.messages || [];
+      if (!messages.length) {
+        addMessage(
+          "bot",
+          "您好，我是金融智能客服助手。当前身份 " + customerNo +
+          "，可以帮您查账户、查流水、申请贷款、信用卡挂失和提交投诉工单，也可以咨询贷款与理财规则。"
+        );
+      } else {
+        messages.forEach((m) =>
+          addMessage(m.role === "user" ? "user" : "bot", m.text, m.object)
+        );
+      }
+      setStatus(true);
+    } catch (err) {
+      setStatus(false);
+      addMessage("bot", "历史记录加载失败：" + err.message);
+    }
+  }
+
+  async function init() {
+    const identity = await FA.ensureIdentity();
+    customerNo = identity.customerNo;
+    senderId = resolveSenderId();
+    refreshSessionLabel();
+
+    inputEl.addEventListener("input", autoSize);
+    inputEl.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault();
+        submit();
+      }
+    });
+    sendEl.addEventListener("click", submit);
+
+    document.querySelectorAll("#quick .quick-item").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        inputEl.value = btn.textContent;
+        autoSize();
+        submit();
+      });
+    });
+
+    document.getElementById("btnNew").addEventListener("click", () => {
+      senderId = "web_" + customerNo.toLowerCase() + "_" +
+        Math.random().toString(36).slice(2, 6);
+      localStorage.setItem("fa_sender_" + customerNo, senderId);
+      refreshSessionLabel();
+      chatEl.innerHTML = "";
+      addMessage("bot", "已开启新的会话，我们可以重新开始。");
+      inputEl.focus();
+    });
+
+    await loadHistory();
+    inputEl.focus();
+  }
+
+  init();
+})();
+</script>
+</body>
+</html>

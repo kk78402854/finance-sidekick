@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>授信与贷款 · 金融小二</title>
+<link rel="stylesheet" href="/static/assets/app.css" />
+</head>
+<body data-role="customer" data-page="credit-loans"
+      data-title="授信与贷款" data-subtitle="额度占用情况、在线申请与审批进度">
+<div class="app">
+  <aside class="sidebar" id="sidebar"></aside>
+  <div class="main">
+    <header class="topbar" id="topbar"></header>
+    <section class="page">
+      <div class="page-head">
+        <div>
+          <h1>授信与贷款</h1>
+          <div class="sub">申请会占用授信额度，由管理员在审批工作台处理</div>
+        </div>
+        <div class="spacer"></div>
+        <button class="btn btn-sm" id="refresh">刷新</button>
+      </div>
+
+      <div class="grid grid-2 mb-16">
+        <div class="card">
+          <div class="card-head"><h3>我的授信额度</h3></div>
+          <div id="limitList"><div class="loading">加载中</div></div>
+        </div>
+        <div class="card">
+          <div class="card-head"><h3>申请贷款</h3></div>
+          <div class="card-body">
+            <form id="loanForm">
+              <div class="form-grid">
+                <div class="field full">
+                  <label>使用额度</label>
+                  <select id="limitSelect" required></select>
+                  <span class="field-hint" id="limitHint">选择一笔可用额度后填写金额</span>
+                </div>
+                <div class="field">
+                  <label>申请金额（元）</label>
+                  <input type="number" id="applyAmount" min="1" step="100" required />
+                </div>
+                <div class="field">
+                  <label>贷款期限（月）</label>
+                  <input type="number" id="applyTerm" min="1" step="1" required />
+                </div>
+                <div class="field">
+                  <label>还款方式</label>
+                  <select id="repayment" required>
+                    <option value="equal_principal_interest">等额本息</option>
+                    <option value="equal_principal">等额本金</option>
+                    <option value="interest_first">先息后本</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label>资金用途</label>
+                  <input type="text" id="purpose" placeholder="如：装修、购车、日常消费" value="日常消费" />
+                </div>
+              </div>
+              <div class="form-actions">
+                <button class="btn btn-primary" type="submit" id="submitBtn">提交申请</button>
+                <span class="field-hint" style="align-self:center">提交后状态为“待审批”</span>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h3>我的贷款申请</h3></div>
+        <div id="applicationTable"><div class="loading">加载中</div></div>
+        <div class="pager" id="pager"></div>
+      </div>
+    </section>
+  </div>
+</div>
+
+<script src="/static/assets/api.js"></script>
+<script src="/static/assets/nav.js"></script>
+<script>
+(async function () {
+  await FA.ensureIdentity();
+  const limitListEl = document.getElementById("limitList");
+  const limitSelectEl = document.getElementById("limitSelect");
+  const limitHintEl = document.getElementById("limitHint");
+  const amountEl = document.getElementById("applyAmount");
+  const termEl = document.getElementById("applyTerm");
+  const repaymentEl = document.getElementById("repayment");
+  const purposeEl = document.getElementById("purpose");
+  const tableEl = document.getElementById("applicationTable");
+  const pagerEl = document.getElementById("pager");
+  const submitBtn = document.getElementById("submitBtn");
+  let limits = [];
+  let pageNo = 1;
+  const pageSize = 10;
+
+  function renderLimits(items) {
+    if (!items.length) {
+      limitListEl.innerHTML = '<div class="empty"><strong>暂无授信额度</strong>可联系客户经理申请授信</div>';
+      return;
+    }
+    limitListEl.innerHTML = `<div class="card-body" style="display:grid;gap:12px">
+      ${items.map((item) => `
+        <div style="border:1px solid var(--line);border-radius:6px;padding:14px 16px">
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+            <b>${FA.escapeHtml(item.product_name || item.product_code)}</b>
+            ${FA.badge(item.limit_status, { active: "生效中", frozen: "冻结", expired: "已过期", closed: "已关闭" })}
+            <span class="spacer" style="flex:1"></span>
+            <span class="field-hint">有效期至 ${FA.fmtDate(item.valid_to)}</span>
+          </div>
+          <div class="grid grid-3" style="margin-top:12px;gap:10px">
+            <div><div class="stat-label">总额度</div><div class="stat-value small">¥ ${FA.fmtMoney(item.total_limit_amount)}</div></div>
+            <div><div class="stat-label">可用额度</div><div class="stat-value small" style="color:var(--brand-600)">¥ ${FA.fmtMoney(item.available_limit_amount)}</div></div>
+            <div><div class="stat-label">已用 / 冻结</div><div class="stat-value small">¥ ${FA.fmtMoney(item.used_limit_amount)} / ${FA.fmtMoney(item.frozen_limit_amount)}</div></div>
+          </div>
+          <div class="field-hint" style="margin-top:8px">
+            年化 ${FA.fmtRate(item.min_interest_rate)} ~ ${FA.fmtRate(item.max_interest_rate)} ·
+            ${FA.escapeHtml(FA.labels.loanType[item.loan_type] || item.loan_type || "-")} ·
+            期限 ${item.min_term_months}~${item.max_term_months} 个月
+          </div>
+        </div>`).join("")}
+    </div>`;
+  }
+
+  function fillLimitSelect(items) {
+    const usable = items.filter(
+      (item) => item.limit_status === "active" && Number(item.available_limit_amount) > 0
+    );
+    if (!usable.length) {
+      limitSelectEl.innerHTML = '<option value="">暂无可申请额度</option>';
+      limitSelectEl.disabled = true;
+      submitBtn.disabled = true;
+      return;
+    }
+    limitSelectEl.disabled = false;
+    submitBtn.disabled = false;
+    limitSelectEl.innerHTML = usable.map((item) => `
+      <option value="${item.limit_no}">
+        ${FA.escapeHtml(item.product_name || item.product_code)} · 可用 ¥${FA.fmtMoney(item.available_limit_amount)}
+      </option>`).join("");
+    syncFormWithLimit();
+  }
+
+  function currentLimit() {
+    return limits.find((item) => item.limit_no === limitSelectEl.value);
+  }
+
+  function syncFormWithLimit() {
+    const item = currentLimit();
+    if (!item) return;
+    amountEl.min = Math.max(Number(item.min_amount || 1), 1);
+    amountEl.max = Math.min(
+      Number(item.max_amount || item.available_limit_amount),
+      Number(item.available_limit_amount)
+    );
+    amountEl.value = Math.min(Math.max(Number(item.min_amount || 1000), 1000), Number(amountEl.max));
+    termEl.min = item.min_term_months || 1;
+    termEl.max = item.max_term_months || 36;
+    termEl.value = item.min_term_months || 12;
+    repaymentEl.value = item.repayment_method || "equal_principal_interest";
+    limitHintEl.textContent =
+      `可申请 ¥${FA.fmtMoney(amountEl.min)} ~ ¥${FA.fmtMoney(amountEl.max)}，` +
+      `期限 ${termEl.min}~${termEl.max} 个月`;
+  }
+
+  async function loadLimits() {
+    const data = await FA.get("/api/portal/credit-limits");
+    limits = data.items || [];
+    renderLimits(limits);
+    fillLimitSelect(limits);
+  }
+
+  async function loadApplications() {
+    tableEl.innerHTML = '<div class="loading">加载中</div>';
+    try {
+      const data = await FA.get("/api/portal/loan-applications", {
+        page_no: pageNo,
+        page_size: pageSize,
+      });
+      renderApplications(data.items || []);
+      FA.renderPager(pagerEl, {
+        pageNo,
+        pageSize,
+        total: data.total || 0,
+        onChange: (next) => {
+          pageNo = next;
+          loadApplications();
+        },
+      });
+    } catch (err) {
+      FA.showError(tableEl, err);
+    }
+  }
+
+  function renderApplications(items) {
+    if (!items.length) {
+      tableEl.innerHTML = '<div class="empty"><strong>还没有贷款申请</strong>填写左侧表单即可提交</div>';
+      return;
+    }
+    tableEl.innerHTML = `<div class="table-wrap"><table>
+      <thead><tr>
+        <th>申请编号</th><th>产品</th><th class="num">金额</th><th>期限</th>
+        <th>用途</th><th>状态</th><th>提交时间</th><th>审批时间</th>
+      </tr></thead>
+      <tbody>${items.map((item) => `<tr>
+        <td class="mono">${FA.escapeHtml(item.application_no)}</td>
+        <td>${FA.escapeHtml(item.product_name || item.product_code)}</td>
+        <td class="num">¥ ${FA.fmtMoney(item.apply_amount)}</td>
+        <td>${item.apply_term_months} 个月</td>
+        <td>${FA.escapeHtml(item.loan_purpose || "-")}</td>
+        <td>${FA.badge(item.application_status, FA.labels.loanStatus)}</td>
+        <td>${FA.fmtDateTime(item.submitted_at)}</td>
+        <td>${FA.fmtDateTime(item.approved_at)}</td>
+      </tr>`).join("")}</tbody></table></div>`;
+  }
+
+  limitSelectEl.addEventListener("change", syncFormWithLimit);
+
+  document.getElementById("loanForm").addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const item = currentLimit();
+    if (!item) return;
+    const amount = Number(amountEl.value);
+    if (amount <= 0) {
+      FA.toast("请输入大于 0 的申请金额。", "error");
+      return;
+    }
+    submitBtn.disabled = true;
+    submitBtn.textContent = "提交中…";
+    try {
+      const data = await FA.post("/api/portal/loan-applications", {
+        limit_no: item.limit_no,
+        apply_amount: amount,
+        apply_term_months: Number(termEl.value),
+        repayment_method: repaymentEl.value,
+        loan_purpose: purposeEl.value.trim() || "日常消费",
+      });
+      FA.toast("申请已提交：" + (data.application_no || ""), "success");
+      pageNo = 1;
+      await Promise.all([loadLimits(), loadApplications()]);
+    } catch (err) {
+      FA.toast(err.message, "error");
+    } finally {
+      submitBtn.disabled = false;
+      submitBtn.textContent = "提交申请";
+    }
+  });
+
+  document.getElementById("refresh").addEventListener("click", () => {
+    loadLimits().catch((err) => FA.showError(limitListEl, err));
+    loadApplications();
+  });
+
+  try {
+    await loadLimits();
+    await loadApplications();
+  } catch (err) {
+    FA.showError(limitListEl, err);
+  }
+})();
+</script>
+</body>
+</html>

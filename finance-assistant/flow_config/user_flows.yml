@@ -1,0 +1,429 @@
+slots:
+  # ---------- 业务标识 ----------
+  account_no:
+    type: text
+    label: 账户号
+    description: 要查询的银行账户号；用户想查全部账户时可为空
+
+  account_scope:
+    type: text
+    label: 账户范围
+    description: 取值为 all 时表示查询当前客户的全部账户
+
+  card_no:
+    type: text
+    label: 银行卡号
+    description: 业务对象消息里的银行卡号，可从 attributes.account_no 关联账户
+
+  credit_card_no:
+    type: text
+    label: 信用卡号
+    description: 需要挂失的信用卡号
+
+  transaction_no:
+    type: text
+    label: 交易号
+    description: 当前咨询或投诉关联的交易流水号
+
+  loan_type:
+    type: text
+    label: 贷款类型
+    description: 用户口语里的贷款类型；action 内映射成接口枚举 consumer/cash/installment/business
+
+  loan_amount:
+    type: number
+    label: 贷款金额
+    description: 申请贷款的金额，单位元
+
+  loan_term_months:
+    type: number
+    label: 贷款期限
+    description: 贷款期限，单位月
+
+  loan_purpose:
+    type: text
+    label: 贷款用途
+    description: 申请贷款的资金用途
+
+  repayment_method:
+    type: text
+    label: 还款方式
+    description: 接口枚举 equal_principal_interest/equal_principal/interest_first，由贷款产品详情写入
+
+  loss_reason:
+    type: text
+    label: 挂失原因
+    description: 信用卡丢失、被盗刷等
+
+  identity_name:
+    type: text
+    label: 姓名
+    description: 用于挂失工单的身份信息
+
+  identity_id_no:
+    type: text
+    label: 证件号
+    description: 身份证号或后四位，演示阶段只做必填校验
+
+  ticket_type:
+    type: text
+    label: 工单类型
+    description: complaint、card_loss、consult 等
+
+  problem_desc:
+    type: text
+    label: 问题描述
+    description: 用户投诉或咨询的具体问题
+
+  related_transaction_no:
+    type: text
+    label: 关联交易号
+    description: 投诉关联的交易流水号，可为空
+
+  # ---------- 查询/办理结果（只由 action 写入） ----------
+  account_summary:
+    type: text
+    label: 账户摘要
+    description: 账户查询结果的展示文本
+
+  balance_amount:
+    type: text
+    label: 账户余额
+    description: 账户当前余额
+
+  available_amount:
+    type: text
+    label: 可用余额
+    description: 余额减去冻结金额
+
+  frozen_amount:
+    type: text
+    label: 冻结金额
+    description: 账户冻结金额
+
+  transaction_summary:
+    type: text
+    label: 交易摘要
+    description: 交易流水查询结果的展示文本
+
+  transaction_start_date:
+    type: text
+    label: 开始日期
+    description: 交易查询开始日期，ISO 格式 yyyy-MM-dd
+
+  transaction_end_date:
+    type: text
+    label: 结束日期
+    description: 交易查询结束日期，ISO 格式 yyyy-MM-dd
+
+  credit_limit_summary:
+    type: text
+    label: 授信摘要
+    description: 可用授信额度说明
+
+  limit_no:
+    type: text
+    label: 授信额度编号
+    description: 贷款申请必填
+
+  product_code:
+    type: text
+    label: 贷款产品编码
+    description: 根据贷款类型匹配到的产品编码
+
+  loan_result:
+    type: text
+    label: 贷款申请结果
+    description: 成功时包含申请编号，失败时包含原因
+
+  loan_application_no:
+    type: text
+    label: 贷款申请编号
+    description: 提交贷款申请后返回的编号
+
+  ticket_no:
+    type: text
+    label: 工单号
+    description: 创建工单后返回的编号
+
+  ticket_result:
+    type: text
+    label: 工单结果
+    description: 工单创建结果的展示文本
+
+  loss_result:
+    type: text
+    label: 挂失结果
+    description: 挂失工单创建结果的展示文本
+
+  error_message:
+    type: text
+    label: 错误信息
+    description: action 调用失败时的错误说明
+
+flows:
+  onboarding:
+    name: 欢迎引导
+    description: 在聊天窗口初次打开时欢迎用户，并介绍可办理的金融业务。这个 flow 通常由系统主动触发。
+    steps:
+      - id: start
+        type: start
+        next: respond
+
+      - id: respond
+        type: response
+        template:
+          text: "你好，这里是金融智能助手。我可以帮你查询账户和交易、申请贷款、办理信用卡挂失、提交投诉工单，也可以解答利率、手续费、提前还款等问题。"
+        next: end
+
+      - id: end
+        type: end
+        next: []
+
+  account_query:
+    name: 账户查询
+    description: 查询客户银行账户的余额、可用余额和冻结金额；用户想查全部账户时把 account_scope 设为 all。
+    steps:
+      - id: start
+        type: start
+        next:
+          - if: "slots.get('account_no') or slots.get('account_scope') == 'all'"
+            then: query_account
+          - else: ask_account_no
+
+      - id: ask_account_no
+        type: collect
+        slot_name: account_no
+        template:
+          text: "请提供要查询的账户号。如果记不清，可以直接说“查我全部账户”。"
+        next: query_account
+
+      - id: query_account
+        type: action
+        action: action_query_account
+        next: show_account
+
+      - id: show_account
+        type: response
+        template:
+          text: "{{ slots.account_summary }}"
+        next: end
+
+      - id: end
+        type: end
+        next: []
+
+  transaction_query:
+    name: 交易查询
+    description: 按账户和时间范围查询交易流水，最多返回最近 20 条。
+    steps:
+      - id: start
+        type: start
+        next:
+          - if: "slots.get('account_no')"
+            then: ask_start_date
+          - else: ask_account_no
+
+      - id: ask_account_no
+        type: collect
+        slot_name: account_no
+        template:
+          text: "请提供要查询流水的账户号。"
+        next: ask_start_date
+
+      - id: ask_start_date
+        type: collect
+        slot_name: transaction_start_date
+        template:
+          text: "请问从哪天开始查？例如 2026-11-01。"
+        next: ask_end_date
+
+      - id: ask_end_date
+        type: collect
+        slot_name: transaction_end_date
+        template:
+          text: "请问查到哪天？例如 2026-11-18。"
+        next: query_transactions
+
+      - id: query_transactions
+        type: action
+        action: action_query_transactions
+        next: show_transactions
+
+      - id: show_transactions
+        type: response
+        template:
+          text: "{{ slots.transaction_summary }}"
+        next: end
+
+      - id: end
+        type: end
+        next: []
+
+  loan_application:
+    name: 贷款申请
+    description: 收集贷款类型、金额、期限和用途，查询授信额度后提交贷款申请并返回申请编号。
+    steps:
+      - id: start
+        type: start
+        next: ask_loan_type
+
+      - id: ask_loan_type
+        type: collect
+        slot_name: loan_type
+        template:
+          text: "请问您想申请哪类贷款？例如消费贷、经营贷、装修贷。"
+        next: ask_loan_amount
+
+      - id: ask_loan_amount
+        type: collect
+        slot_name: loan_amount
+        template:
+          text: "请问贷款金额是多少元？"
+        next: ask_loan_term
+
+      - id: ask_loan_term
+        type: collect
+        slot_name: loan_term_months
+        template:
+          text: "请问贷款期限是多少个月？"
+        next: ask_loan_purpose
+
+      - id: ask_loan_purpose
+        type: collect
+        slot_name: loan_purpose
+        template:
+          text: "请问这笔贷款的资金用途是什么？"
+        next: query_credit_limit
+
+      - id: query_credit_limit
+        type: action
+        action: action_query_credit_limit
+        next:
+          - if: "slots.get('limit_no')"
+            then: submit_application
+          - else: show_loan_result
+
+      - id: submit_application
+        type: action
+        action: action_submit_loan_application
+        next: show_loan_result
+
+      - id: show_loan_result
+        type: response
+        template:
+          text: "{{ slots.loan_result }}"
+        next: end
+
+      - id: end
+        type: end
+        next: []
+
+  card_loss:
+    name: 信用卡挂失
+    description: 收集信用卡号、挂失原因和身份信息，创建挂失工单并返回工单号。
+    steps:
+      - id: start
+        type: start
+        next:
+          - if: "slots.get('credit_card_no')"
+            then: ask_loss_reason
+          - else: ask_card_no
+
+      - id: ask_card_no
+        type: collect
+        slot_name: credit_card_no
+        template:
+          text: "请提供需要挂失的信用卡号。"
+        next: ask_loss_reason
+
+      - id: ask_loss_reason
+        type: collect
+        slot_name: loss_reason
+        template:
+          text: "请问挂失原因是什么？例如卡片丢失、疑似盗刷。"
+        next: ask_identity_name
+
+      - id: ask_identity_name
+        type: collect
+        slot_name: identity_name
+        template:
+          text: "为了核实身份，请提供持卡人姓名。"
+        next: ask_identity_id
+
+      - id: ask_identity_id
+        type: collect
+        slot_name: identity_id_no
+        template:
+          text: "请提供身份证号后四位。"
+        next: report_loss
+
+      - id: report_loss
+        type: action
+        action: action_report_card_loss
+        next: show_loss_result
+
+      - id: show_loss_result
+        type: response
+        template:
+          text: "{{ slots.loss_result }}"
+        next: end
+
+      - id: end
+        type: end
+        next: []
+
+  complaint_ticket:
+    name: 投诉工单
+    description: 收集工单类型和问题描述，创建投诉工单并返回工单号；关联交易号可选。
+    steps:
+      - id: start
+        type: start
+        next: ask_ticket_type
+
+      - id: ask_ticket_type
+        type: collect
+        slot_name: ticket_type
+        template:
+          text: "请问您要提交哪类工单？例如投诉、咨询、建议。"
+        next: ask_problem_desc
+
+      - id: ask_problem_desc
+        type: collect
+        slot_name: problem_desc
+        template:
+          text: "请描述一下具体问题。如果有交易号，也可以一并告诉我。"
+        next: create_ticket
+
+      - id: create_ticket
+        type: action
+        action: action_create_complaint_ticket
+        next: show_ticket_result
+
+      - id: show_ticket_result
+        type: response
+        template:
+          text: "{{ slots.ticket_result }}"
+        next: end
+
+      - id: end
+        type: end
+        next: []
+
+  human_handoff:
+    name: 人工客服
+    description: 将当前对话转交给人工客服处理。
+    steps:
+      - id: start
+        type: start
+        next: respond
+
+      - id: respond
+        type: response
+        template:
+          text: "好的，我来为你转接人工客服，请稍等。"
+        next: end
+
+      - id: end
+        type: end
+        next: []

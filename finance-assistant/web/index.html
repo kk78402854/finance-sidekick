@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>金融小二 · 业务门户</title>
+<link rel="stylesheet" href="/static/assets/app.css" />
+</head>
+<body>
+<div class="page" style="max-width:1180px;margin:0 auto;padding-top:26px">
+
+  <div class="home-top">
+    <div class="home-brand">
+      <div class="brand-logo">融</div>
+      <div>
+        <div class="brand-name">金融小二</div>
+        <div class="brand-sub">金融中台 · 对话客服 · 业务门户</div>
+      </div>
+    </div>
+    <div class="topbar-spacer"></div>
+    <div class="identity">
+      <span class="identity-label">客户号</span>
+      <input id="custNo" placeholder="CUS00000001" autocomplete="off" spellcheck="false" />
+    </div>
+    <div class="identity">
+      <span class="identity-label">员工号</span>
+      <input id="opNo" placeholder="EMP000001" autocomplete="off" spellcheck="false" />
+    </div>
+    <button class="btn btn-primary" id="applyIdentity">应用身份</button>
+  </div>
+
+  <section class="hero">
+    <h1>一套中台能力，三种使用视角</h1>
+    <p>
+      客户可以自助查询账户、交易、授信与贷款，并提交工单；管理员可以查看数据大盘、
+      客户全量信息和待办审批；AI 对话助手则把同一批中台接口变成自然语言服务。
+      页面顶部的客户号与员工号可随时切换，不再依赖后端写死的演示身份。
+    </p>
+    <div class="btn-row">
+      <a class="btn btn-primary" href="/customer/profile">进入客户视角</a>
+      <a class="btn" href="/admin/dashboard">进入管理员视角</a>
+      <a class="btn" href="/chat">和 AI 助手聊聊</a>
+    </div>
+  </section>
+
+  <div class="section-title">选择入口</div>
+  <div class="grid grid-3">
+    <div class="card role-card">
+      <div class="role-icon">客</div>
+      <h3>客户视角</h3>
+      <p>查看本人信息、账户、交易流水、授信额度，在线申请贷款与提交工单。</p>
+      <a class="btn btn-primary" href="/customer/profile">我的金融中心</a>
+    </div>
+    <div class="card role-card">
+      <div class="role-icon admin">管</div>
+      <h3>管理员视角</h3>
+      <p>掌握全行数据大盘，检索客户详情，处理待审批贷款与客户工单。</p>
+      <a class="btn btn-primary" href="/admin/dashboard">进入管理后台</a>
+    </div>
+    <div class="card role-card">
+      <div class="role-icon chat">AI</div>
+      <h3>AI 对话助手</h3>
+      <p>用自然语言完成查余额、查流水、申请贷款、挂失与投诉等业务。</p>
+      <a class="btn btn-primary" href="/chat">打开对话</a>
+    </div>
+  </div>
+
+  <div class="section-title">能力地图</div>
+  <div class="feature-grid">
+    <div class="feature"><strong>账户与交易</strong>账户列表、余额汇总、按账户与时间筛选流水</div>
+    <div class="feature"><strong>授信与贷款</strong>额度占用情况、在线申请、申请进度与审批结果</div>
+    <div class="feature"><strong>工单服务</strong>投诉、挂失等工单提交与处理进度跟踪</div>
+    <div class="feature"><strong>客户管理</strong>客户检索、档案、账户、授信、交易与工单聚合视图</div>
+    <div class="feature"><strong>审批工作台</strong>待审批贷款一键通过 / 拒绝，结果实时回写中台</div>
+    <div class="feature"><strong>数据大盘</strong>客户、账户、授信、交易规模与待办数量一屏掌握</div>
+  </div>
+
+  <div class="section-title">演示提示</div>
+  <div class="card">
+    <div class="card-body" style="color:var(--text-500);font-size:13px">
+      默认客户号为 <b>CUS00000001</b>，默认员工号为 <b>EMP000001</b>。
+      切换客户号后，客户视角的全部接口都会以该客户身份调用中台，越权访问会被中台拒绝。
+      管理端的列表与大盘数据来自本地测试库，审批与工单处理会真实写入中台。
+    </div>
+  </div>
+
+</div>
+
+<script src="/static/assets/api.js"></script>
+<script>
+(async function () {
+  await FA.ensureIdentity();
+  const custInput = document.getElementById("custNo");
+  const opInput = document.getElementById("opNo");
+  custInput.value = FA.identity.customerNo;
+  opInput.value = FA.identity.operatorNo;
+
+  document.getElementById("applyIdentity").addEventListener("click", () => {
+    const cust = custInput.value.trim().toUpperCase();
+    const op = opInput.value.trim().toUpperCase();
+    if (!cust || !op) {
+      FA.toast("客户号和员工号都要填写。", "error");
+      return;
+    }
+    FA.identity.setCustomerNo(cust);
+    FA.identity.setOperatorNo(op);
+    FA.toast("身份已保存。", "success");
+  });
+})();
+</script>
+</body>
+</html>

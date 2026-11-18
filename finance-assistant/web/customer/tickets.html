@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>我的工单 · 金融小二</title>
+<link rel="stylesheet" href="/static/assets/app.css" />
+</head>
+<body data-role="customer" data-page="tickets"
+      data-title="我的工单" data-subtitle="投诉、挂失与咨询的提交与进度">
+<div class="app">
+  <aside class="sidebar" id="sidebar"></aside>
+  <div class="main">
+    <header class="topbar" id="topbar"></header>
+    <section class="page">
+      <div class="page-head">
+        <div>
+          <h1>我的工单</h1>
+          <div class="sub">提交后会进入管理员工单工作台，处理结果会同步到列表中</div>
+        </div>
+        <div class="spacer"></div>
+        <button class="btn btn-sm" id="refresh">刷新</button>
+      </div>
+
+      <div class="grid grid-main mb-16">
+        <div class="card">
+          <div class="card-head"><h3>提交工单</h3></div>
+          <div class="card-body">
+            <div class="btn-row mb-16">
+              <button class="btn btn-sm" data-quick="card_loss">信用卡挂失</button>
+              <button class="btn btn-sm" data-quick="complaint">投诉重复扣款</button>
+              <button class="btn btn-sm" data-quick="consult">咨询还款问题</button>
+            </div>
+            <form id="ticketForm">
+              <div class="form-grid">
+                <div class="field">
+                  <label>工单类型</label>
+                  <select id="ticketType">
+                    <option value="complaint">投诉</option>
+                    <option value="consult">咨询</option>
+                    <option value="suggestion">建议</option>
+                    <option value="card_loss">信用卡挂失</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label>工单标题</label>
+                  <input type="text" id="ticketTitle" maxlength="60" placeholder="一句话描述问题" required />
+                </div>
+                <div class="field full">
+                  <label>问题描述</label>
+                  <textarea id="ticketContent" maxlength="500" placeholder="请描述时间、金额、账户等关键信息" required></textarea>
+                </div>
+              </div>
+              <div class="form-actions">
+                <button class="btn btn-primary" type="submit" id="submitBtn">提交工单</button>
+                <span class="field-hint" style="align-self:center">提交成功后状态为“待处理”</span>
+              </div>
+            </form>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-head"><h3>处理说明</h3></div>
+          <div class="card-body" style="font-size:13px;color:var(--text-500);line-height:1.9">
+            <p>1. 工单由中台创建，生成工单号并关联处理流程。</p>
+            <p>2. 管理员在“工单处理”页面受理或驳回。</p>
+            <p>3. 处理结果会写回中台，刷新本页即可查看。</p>
+            <p style="margin-top:10px">挂失类工单请补充卡号后四位与丢失时间，便于快速处理。</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h3>工单记录</h3></div>
+        <div id="table"><div class="loading">加载中</div></div>
+        <div class="pager" id="pager"></div>
+      </div>
+    </section>
+  </div>
+</div>
+
+<script src="/static/assets/api.js"></script>
+<script src="/static/assets/nav.js"></script>
+<script>
+(async function () {
+  await FA.ensureIdentity();
+  const typeEl = document.getElementById("ticketType");
+  const titleEl = document.getElementById("ticketTitle");
+  const contentEl = document.getElementById("ticketContent");
+  const tableEl = document.getElementById("table");
+  const pagerEl = document.getElementById("pager");
+  const submitBtn = document.getElementById("submitBtn");
+  let pageNo = 1;
+  const pageSize = 10;
+
+  const QUICK = {
+    card_loss: {
+      type: "card_loss",
+      title: "信用卡丢失挂失申请",
+      content: "本人信用卡不慎丢失，卡号后四位为____，丢失时间约为____，请协助挂失并补办新卡。",
+    },
+    complaint: {
+      type: "complaint",
+      title: "投诉重复扣款",
+      content: "本人发现账户在____（时间）出现重复扣款，金额约____元，请核实并退回多扣款项。",
+    },
+    consult: {
+      type: "consult",
+      title: "咨询还款问题",
+      content: "想咨询本期贷款的还款金额与扣款时间，请协助查询。",
+    },
+  };
+
+  document.querySelectorAll("[data-quick]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const preset = QUICK[btn.dataset.quick];
+      typeEl.value = preset.type;
+      titleEl.value = preset.title;
+      contentEl.value = preset.content;
+      contentEl.focus();
+    });
+  });
+
+  async function load() {
+    tableEl.innerHTML = '<div class="loading">加载中</div>';
+    try {
+      const data = await FA.get("/api/portal/tickets", {
+        page_no: pageNo,
+        page_size: pageSize,
+      });
+      renderTable(data.items || []);
+      FA.renderPager(pagerEl, {
+        pageNo,
+        pageSize,
+        total: data.total || 0,
+        onChange: (next) => {
+          pageNo = next;
+          load();
+        },
+      });
+    } catch (err) {
+      FA.showError(tableEl, err);
+    }
+  }
+
+  function renderTable(items) {
+    if (!items.length) {
+      tableEl.innerHTML = '<div class="empty"><strong>暂无工单</strong>可在上方提交第一张工单</div>';
+      return;
+    }
+    tableEl.innerHTML = `<div class="table-wrap"><table>
+      <thead><tr>
+        <th>工单号</th><th>类型</th><th>标题</th><th>状态</th>
+        <th>提交时间</th><th>处理时间</th>
+      </tr></thead>
+      <tbody>${items.map((item) => `<tr>
+        <td class="mono">${FA.escapeHtml(item.ticket_no)}</td>
+        <td>${FA.escapeHtml(FA.labels.ticketType[item.ticket_type] || item.ticket_type)}</td>
+        <td class="strong">${FA.escapeHtml(item.ticket_title)}</td>
+        <td>${FA.badge(item.ticket_status, FA.labels.ticketStatus)}</td>
+        <td>${FA.fmtDateTime(item.submitted_at)}</td>
+        <td>${FA.fmtDateTime(item.handled_at)}</td>
+      </tr>`).join("")}</tbody></table></div>`;
+  }
+
+  document.getElementById("ticketForm").addEventListener("submit", async (event) => {
+    event.preventDefault();
+    submitBtn.disabled = true;
+    submitBtn.textContent = "提交中…";
+    try {
+      const data = await FA.post("/api/portal/tickets", {
+        ticket_type: typeEl.value,
+        ticket_title: titleEl.value.trim(),
+        ticket_content: contentEl.value.trim(),
+      });
+      FA.toast("工单已提交：" + (data.ticket_no || ""), "success");
+      titleEl.value = "";
+      contentEl.value = "";
+      pageNo = 1;
+      await load();
+    } catch (err) {
+      FA.toast(err.message, "error");
+    } finally {
+      submitBtn.disabled = false;
+      submitBtn.textContent = "提交工单";
+    }
+  });
+
+  document.getElementById("refresh").addEventListener("click", load);
+  load();
+})();
+</script>
+</body>
+</html>

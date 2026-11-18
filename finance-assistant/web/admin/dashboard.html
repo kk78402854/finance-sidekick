@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>数据大盘 · 金融小二</title>
+<link rel="stylesheet" href="/static/assets/app.css" />
+</head>
+<body data-role="admin" data-page="dashboard"
+      data-title="数据大盘" data-subtitle="全行业务规模与待办概览">
+<div class="app">
+  <aside class="sidebar" id="sidebar"></aside>
+  <div class="main">
+    <header class="topbar" id="topbar"></header>
+    <section class="page">
+      <div class="page-head">
+        <div>
+          <h1>数据大盘</h1>
+          <div class="sub">统计口径来自中台业务库，列表数据为只读查询</div>
+        </div>
+        <div class="spacer"></div>
+        <button class="btn btn-sm" id="refresh">刷新</button>
+      </div>
+
+      <div class="grid grid-3 mb-16" id="cards"><div class="card"><div class="loading">加载中</div></div></div>
+
+      <div class="grid grid-2">
+        <div class="card">
+          <div class="card-head"><h3>待审批贷款</h3><span class="spacer"></span>
+            <a class="btn btn-sm btn-ghost" href="/admin/loan-approvals">去处理</a>
+          </div>
+          <div id="loanList"><div class="loading">加载中</div></div>
+        </div>
+        <div class="card">
+          <div class="card-head"><h3>处理中工单</h3><span class="spacer"></span>
+            <a class="btn btn-sm btn-ghost" href="/admin/tickets">去处理</a>
+          </div>
+          <div id="ticketList"><div class="loading">加载中</div></div>
+        </div>
+      </div>
+    </section>
+  </div>
+</div>
+
+<script src="/static/assets/api.js"></script>
+<script src="/static/assets/nav.js"></script>
+<script>
+(async function () {
+  await FA.ensureIdentity();
+  const cardsEl = document.getElementById("cards");
+
+  async function load() {
+    cardsEl.innerHTML = '<div class="card"><div class="loading">加载中</div></div>';
+    try {
+      const data = await FA.get("/api/portal/admin/overview");
+      cardsEl.innerHTML = `
+        ${stat("客户总数", data.customer_count, `活跃 ${data.active_customer_count} 户`)}
+        ${stat("账户总数", data.account_count, `存款 ¥ ${FA.fmtMoney(data.total_balance)}`)}
+        ${stat("授信总额", "¥ " + FA.fmtMoney(data.total_limit), `可用 ¥ ${FA.fmtMoney(data.available_limit)}`, true)}
+        ${stat("交易笔数", data.transaction_count, "全量流水记录", true)}
+        ${stat("待审批贷款", data.loan_pending, "客户已提交，等待审批")}
+        ${stat("待处理工单", data.ticket_pending, "处理中或待受理")}`;
+      renderLoans(data.recent_loans || []);
+      renderTickets(data.recent_tickets || []);
+    } catch (err) {
+      FA.showError(cardsEl, err);
+    }
+  }
+
+  function stat(label, value, sub, small) {
+    return `<div class="card stat">
+      <div class="stat-label">${label}</div>
+      <div class="stat-value${small ? " small" : ""}">${value ?? 0}</div>
+      <div class="stat-sub">${sub || ""}</div>
+    </div>`;
+  }
+
+  function renderLoans(items) {
+    const el = document.getElementById("loanList");
+    if (!items.length) {
+      el.innerHTML = '<div class="empty"><strong>暂无待审批贷款</strong>客户提交申请后会出现在这里</div>';
+      return;
+    }
+    el.innerHTML = `<div class="table-wrap"><table><thead><tr>
+        <th>客户</th><th>产品</th><th class="num">金额</th><th>状态</th><th>提交时间</th>
+      </tr></thead><tbody>${items.map((item) => `<tr>
+        <td class="strong">${FA.escapeHtml(item.customer_name)}<div class="field-hint mono">${FA.escapeHtml(item.customer_no)}</div></td>
+        <td>${FA.escapeHtml(item.product_name)}</td>
+        <td class="num">¥ ${FA.fmtMoney(item.apply_amount)}</td>
+        <td>${FA.badge(item.application_status, FA.labels.loanStatus)}</td>
+        <td>${FA.fmtDate(item.submitted_at)}</td>
+      </tr>`).join("")}</tbody></table></div>`;
+  }
+
+  function renderTickets(items) {
+    const el = document.getElementById("ticketList");
+    if (!items.length) {
+      el.innerHTML = '<div class="empty"><strong>暂无处理中工单</strong>客户提交工单后会出现在这里</div>';
+      return;
+    }
+    el.innerHTML = `<div class="table-wrap"><table><thead><tr>
+        <th>客户</th><th>工单</th><th>类型</th><th>状态</th><th>提交时间</th>
+      </tr></thead><tbody>${items.map((item) => `<tr>
+        <td class="strong">${FA.escapeHtml(item.customer_name)}<div class="field-hint mono">${FA.escapeHtml(item.customer_no)}</div></td>
+        <td>${FA.escapeHtml(item.ticket_title)}</td>
+        <td>${FA.escapeHtml(FA.labels.ticketType[item.ticket_type] || item.ticket_type)}</td>
+        <td>${FA.badge(item.ticket_status, FA.labels.ticketStatus)}</td>
+        <td>${FA.fmtDate(item.submitted_at)}</td>
+      </tr>`).join("")}</tbody></table></div>`;
+  }
+
+  document.getElementById("refresh").addEventListener("click", load);
+  load();
+})();
+</script>
+</body>
+</html>

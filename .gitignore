@@ -1,0 +1,32 @@
+# Python-generated files
+__pycache__/
+*.py[cod]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv/
+
+# Tool caches
+.pytest_cache/
+.ruff_cache/
+.pyright/
+
+# Local config and logs
+.env
+logs/
+*.log
+seeds/raw/
+
+# IDE / OS
+.idea/
+.vscode/
+*.iml
+.DS_Store
+Thumbs.db
+
+# 本地技能与临时产物
+.taste-skill/
+.dockerignore.bak
