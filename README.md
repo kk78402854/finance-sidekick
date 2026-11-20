@@ -4,12 +4,25 @@
 ![Python](https://img.shields.io/badge/Python-3.12-3776AB?logo=python&logoColor=white)
 ![FastAPI](https://img.shields.io/badge/FastAPI-0.115%2B-009688?logo=fastapi&logoColor=white)
 ![Tests](https://img.shields.io/badge/tests-58%20passed-brightgreen)
+![MySQL](https://img.shields.io/badge/MySQL-8.0-4479A1?logo=mysql&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker&logoColor=white)
 
 面向零售银行的**金融业务中台 + 智能对话客服 + 业务门户**一体化演示项目。
 
 中台用 FastAPI + MySQL 模拟真实银行核心链路（开户、账户、交易、授信、贷款、还款、风控、催收、工单），
 客服侧把同一批接口封装成流程化的自然语言服务，门户则提供客户、管理员、AI 三种使用视角。
 全部业务数据为程序生成的测试数据，可一键初始化、可重复演练。
+
+### 技术栈
+
+| 层 | 技术 |
+| --- | --- |
+| 业务中台 | FastAPI · Pydantic · PyMySQL · MySQL 8 |
+| 对话引擎 | 自研流程引擎（YAML）· Jinja2 · httpx |
+| 大模型 | 通义千问（意图规划 + 回复生成） |
+| 知识库 | FAQ 种子数据 + 可插拔 RAG 检索 |
+| 前端 | 原生 HTML / CSS / JS（零构建，12 个页面） |
+| 工程质量 | ruff · pytest · GitHub Actions · Docker Compose |
 
 ---
 
@@ -76,6 +89,19 @@
 - **单元测试**：58 条（中台 53 + 客服 5），不依赖 MySQL / LLM / 外网。中台覆盖幂等、分页、校验器、
   请求 ID、限流、指标、审计脱敏、异常处理器与鉴权辅助函数；客服覆盖知识空结果兜底、意图路由与种子数据完整性
 
+本地复跑：
+
+```bash
+# 中台（不依赖数据库）
+uv run --offline ruff check .
+uv run --offline pytest tests/unit -q
+
+# 客服
+cd finance-assistant
+uv run --offline ruff check .
+uv run --offline pytest -q
+```
+
 ### 请求链路
 
 - 每个响应都带 `X-Request-Id`：调用方传入合法 ID 则透传，否则自动生成，响应体 `request_id` 与之一致
@@ -113,7 +139,7 @@
                ▼                                         ▼
         ┌──────────────────────────────────────────────────────┐
         │            金融中台 finance-data（FastAPI）             │
-        │  客户 · 账户 · 交易 · 理财 · 信贷 · 还款 · 风控 · 催收    │
+        │  客户 · 账户 · 交易 · 理财 · 信贷 · 还款 · 风控 · 催收 · 运营 │
         └──────────────────────────┬───────────────────────────┘
                                    ▼
                         ┌────────────────────┐
@@ -128,6 +154,13 @@
 | 业务门户 + 客服 | `18083` | 网页入口 `http://127.0.0.1:18083/` |
 | 金融中台 | `8000` | 业务接口，Swagger `/docs` |
 | MySQL | `3307`（Docker） | 映射到容器内 `3306`，避开宿主机已有实例 |
+
+### 关键设计
+
+- **LLM 只做规划**：模型只输出 `TurnPlan`，具体流程、跳转与调用由 YAML 配置和 `TurnPlanValidator` 决定，避免“模型自由发挥”
+- **失败转澄清**：计划校验失败、对象无法匹配时进入澄清分支，不让模型异常直接变成 500
+- **槽位三级取值**：`active task slots` → `focused_object` 映射 → 主动追问，保证多轮补槽稳定
+- **写接口幂等**：中台写操作统一携带 `request_no`，重复提交不会重复建单或重复扣款
 
 ---
 
@@ -217,7 +250,7 @@ uv run python main.py                    # http://127.0.0.1:18083
 
 | 变量 | 示例 | 说明 |
 | --- | --- | --- |
-| `DB_HOST` / `DB_PORT` | `127.0.0.1` / `3306` | MySQL 连接 |
+| `DB_HOST` / `DB_PORT` | `127.0.0.1` / `3306` | 本地 MySQL；Docker 场景由 compose 注入，宿主机映射为 `3307` |
 | `DB_USER` / `DB_PASSWORD` | `root` / `******` | 数据库账号 |
 | `DB_NAME` | `finance` | 业务库 |
 | `APP_PORT` | `8000` | 服务端口 |
