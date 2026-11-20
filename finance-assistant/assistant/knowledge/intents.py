@@ -62,6 +62,16 @@ KNOWLEDGE_INTENTS: dict[str, KnowledgeIntent] = {
     ),
 
     # ---------- FAQ / 知识库 ----------
+    "bank_branch_info": KnowledgeIntent(
+        id="bank_branch_info",
+        description="开户行、网点地址、营业时间、联系电话、银行基本信息咨询",
+        provider_ids=["faq.default", "rag.default"],
+    ),
+    "account_service_info": KnowledgeIntent(
+        id="account_service_info",
+        description="转账限额、短信通知、账户功能与收费标准咨询",
+        provider_ids=["faq.default", "rag.default"],
+    ),
     "interest_rate": KnowledgeIntent(
         id="interest_rate", description="利率说明",
         provider_ids=["faq.default", "rag.default"],
@@ -95,7 +105,7 @@ KNOWLEDGE_INTENTS: dict[str, KnowledgeIntent] = {
         provider_ids=["rag.default"],
     ),
     "general_finance_info": KnowledgeIntent(
-        id="general_finance_info", description="通用金融信息咨询",
+        id="general_finance_info", description="通用金融信息、知识库资料、银行综合服务咨询",
         provider_ids=["faq.default", "rag.default"],
     ),
 }

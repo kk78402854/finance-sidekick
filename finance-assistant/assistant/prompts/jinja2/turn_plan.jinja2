@@ -29,6 +29,8 @@
 3. 如果用户在询问信息、规则、政策或说明，并且与 Knowledge Intents 匹配，选择 `knowledge`。
 4. 只有与业务办理和知识咨询都无关时，才选择 `chitchat`。
 
+用户明确要求「查知识库」「查资料」「查官方说明」时，即使主题宽泛，也必须选择 `knowledge`，Intent 使用 `general_finance_info`，不要归为 `chitchat`。
+
 不要把问候、感谢等附带表达单独识别为 `chitchat`。例如“你好，帮我查一下余额”只属于 `task`。
 
 ## Task
@@ -138,6 +140,22 @@ Intent 规则：
 {
   "task": null,
   "knowledge": {"intents": ["loan_product_info", "interest_rate"]},
+  "chitchat": null
+}
+
+用户说“你们网点周末营业吗”：
+
+{
+  "task": null,
+  "knowledge": {"intents": ["bank_branch_info"]},
+  "chitchat": null
+}
+
+用户说“查询知识库里的银行信息”：
+
+{
+  "task": null,
+  "knowledge": {"intents": ["general_finance_info"]},
   "chitchat": null
 }
 

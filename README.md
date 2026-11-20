@@ -3,7 +3,7 @@
 [![CI](https://github.com/kk78402854/finance-sidekick/actions/workflows/ci.yml/badge.svg)](https://github.com/kk78402854/finance-sidekick/actions/workflows/ci.yml)
 ![Python](https://img.shields.io/badge/Python-3.12-3776AB?logo=python&logoColor=white)
 ![FastAPI](https://img.shields.io/badge/FastAPI-0.115%2B-009688?logo=fastapi&logoColor=white)
-![Tests](https://img.shields.io/badge/tests-53%20passed-brightgreen)
+![Tests](https://img.shields.io/badge/tests-58%20passed-brightgreen)
 
 面向零售银行的**金融业务中台 + 智能对话客服 + 业务门户**一体化演示项目。
 
@@ -54,7 +54,7 @@
 
 - 自研对话引擎：意图识别 → 轮次规划 → 流程执行（YAML 配置）→ 槽位校验 → Action 调用 → 对象消息渲染
 - 6 个金融 Action：账户查询、交易查询、贷款申请、授信查询、卡片挂失、投诉工单
-- 知识问答：FAQ 表 + 意图注册表 + RAG 检索（可配置）+ Jinja2 Prompt 模板
+- 知识问答：20 条 FAQ 种子数据（首次启动自动导入）+ 意图注册表 + RAG 检索（可配置）+ Jinja2 Prompt 模板；检索为空时返回确定性引导话术，不让模型编造答案
 - 对话状态持久化（MySQL），支持多轮补槽、流程中断与恢复
 
 ### 3. 业务门户 `finance-assistant/web/`
@@ -73,8 +73,8 @@
 
 - **CI**：GitHub Actions 两个 job（中台 / 客服）分别执行 `ruff check` 与 `pytest`，推送即校验
 - **静态检查**：ruff 统一 `py312`、行宽 120、规则 `E/F/W/I/UP`
-- **单元测试**：`tests/unit/` 53 条，不依赖 MySQL / LLM / 外网，覆盖幂等、分页、校验器、
-  请求 ID、限流、指标、审计脱敏、异常处理器与鉴权辅助函数
+- **单元测试**：58 条（中台 53 + 客服 5），不依赖 MySQL / LLM / 外网。中台覆盖幂等、分页、校验器、
+  请求 ID、限流、指标、审计脱敏、异常处理器与鉴权辅助函数；客服覆盖知识空结果兜底、意图路由与种子数据完整性
 
 ### 请求链路
 
@@ -148,7 +148,8 @@ finance-data/
 └── finance-assistant/       # 智能客服 + 业务门户
     ├── assistant/           # 引擎、流程、Action、知识库、仓储、门户 BFF
     ├── flow_config/         # 7 个金融对话流程（YAML）
-    ├── tests/               # 客服侧冒烟测试
+    ├── tests/               # 客服侧单元测试（知识兜底、意图路由、种子完整性）
+    ├── seeds/               # FAQ 种子数据（首次启动自动导入）
     └── web/                 # 12 个页面 + app.css / api.js / nav.js
 ```
 
@@ -226,7 +227,7 @@ uv run python main.py                    # http://127.0.0.1:18083
 | `finance_channel_code` | 渠道编码，默认 `MOBILE_BANK` |
 | `finance_operator_no` | 员工编号，默认 `EMP000001` |
 | `demo_customer_no` | 默认客户号，默认 `CUS00000001` |
-| `finance_rag_base_url` | 知识库检索服务，留空则 RAG 返回空结果 |
+| `finance_rag_base_url` | 知识库检索服务；留空时仅使用 FAQ（已内置 20 条种子数据） |
 | `finance_db_url` | 中台业务库只读连接，管理端列表与大盘依赖它 |
 | `APP_HOST` / `APP_PORT` | `127.0.0.1` / `18083` |
 

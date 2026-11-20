@@ -136,6 +136,7 @@ services:
     volumes:
       - ../finance-assistant/web:/app/web:ro
       - ../finance-assistant/assistant:/app/assistant:ro
+      - ../finance-assistant/seeds:/app/seeds:ro
       - ../finance-assistant/flow_config:/app/flow_config:ro
       - ../finance-assistant/main.py:/app/main.py:ro
     depends_on:

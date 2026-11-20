@@ -1,6 +1,7 @@
 """
 创建fastapi对象
 """
+import logging
 from contextlib import asynccontextmanager
 from pathlib import Path
 
@@ -10,9 +11,12 @@ from fastapi.staticfiles import StaticFiles
 
 from assistant.api.chat_router import chat_router
 from assistant.api.portal_router import portal_router
+from assistant.repository.faq_seed import seed_default_faqs
 from assistant.utils.db import close_db_engine, create_tables, init_db_engine
 from assistant.utils.finance_readonly_db import close_finance_db
 from assistant.utils.httpx_client import close_http_client, init_http_client
+
+logger = logging.getLogger(__name__)
 
 # 静态页面目录（web 下按角色拆成多个页面）
 WEB_DIR = Path(__file__).parents[2] / "web"
@@ -40,6 +44,11 @@ async def lifespan(app: FastAPI):
     init_db_engine()
     # 首次启动自动建表：dialogue_states、faq_items
     await create_tables()
+    # FAQ 为空时导入默认问答，保证知识检索开箱可用
+    try:
+        await seed_default_faqs()
+    except Exception:
+        logger.warning("FAQ 种子数据初始化失败，知识检索将只依赖外部 RAG", exc_info=True)
     # 远程调用对象初始化操作
     init_http_client()
     yield

@@ -15,6 +15,13 @@ jobs:
   data-api:
     name: 中台 lint + 单测
     runs-on: ubuntu-latest
+    # 单测不连库，但 app.config 导入时会读取这些变量，提供占位值即可
+    env:
+      DB_HOST: 127.0.0.1
+      DB_PORT: "3306"
+      DB_USER: ci
+      DB_PASSWORD: ci
+      DB_NAME: ci
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v5
