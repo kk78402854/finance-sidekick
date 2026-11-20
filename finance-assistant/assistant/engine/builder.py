@@ -3,7 +3,6 @@
 """
 from pathlib import Path
 
-from assistant.chitchat import chit_chat
 from assistant.chitchat.chit_chat import ChitChatHandler
 from assistant.clarify.clarify_response import ClarifyResponse
 from assistant.engine.dialogue_engine import DialogueEngine

@@ -9,6 +9,7 @@ from fastapi import Header
 
 from .database import fetch_one
 from .errors import forbidden, not_found, unauthorized
+from .logging_config import get_request_id
 
 
 @dataclass(frozen=True)
@@ -67,7 +68,7 @@ def get_request_context(
         if customer["customer_status"] in {"closed", "cancelled", "blacklisted"}:
             raise forbidden("CUSTOMER_STATUS_FORBIDDEN", "当前客户状态不允许办理业务")
         return RequestContext(
-            request_id=x_request_id,
+            request_id=get_request_id() or x_request_id,
             channel_code=channel_code,
             auth_type="customer",
             principal_no=token,
@@ -84,7 +85,7 @@ def get_request_context(
     )
     if employee is not None:
         return RequestContext(
-            request_id=x_request_id,
+            request_id=get_request_id() or x_request_id,
             channel_code=channel_code,
             auth_type="employee",
             principal_no=token,

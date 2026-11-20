@@ -16,7 +16,7 @@
       <div class="page-head">
         <div>
           <h1>授信与贷款</h1>
-          <div class="sub">申请会占用授信额度，由管理员在审批工作台处理</div>
+          <div class="sub">在线申请贷款并跟踪审批进度，申请将占用对应授信额度</div>
         </div>
         <div class="spacer"></div>
         <button class="btn btn-sm" id="refresh">刷新</button>
@@ -195,7 +195,7 @@
 
   function renderApplications(items) {
     if (!items.length) {
-      tableEl.innerHTML = '<div class="empty"><strong>还没有贷款申请</strong>填写左侧表单即可提交</div>';
+      tableEl.innerHTML = '<div class="empty"><strong>暂无贷款申请</strong>可使用左侧表单发起申请</div>';
       return;
     }
     tableEl.innerHTML = `<div class="table-wrap"><table>

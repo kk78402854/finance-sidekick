@@ -1,5 +1,4 @@
 from dataclasses import dataclass
-from typing import TypeAlias
 
 
 @dataclass
@@ -28,7 +27,7 @@ class TaskResumed:
 class TaskCanceled:
     task: TaskRef
 
-TaskEvent: TypeAlias = (
+type TaskEvent = (
         TaskStarted
         | TaskSwitched
         | TaskResumed

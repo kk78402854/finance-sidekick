@@ -2,8 +2,9 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any
 
-from assistant.task.flow.links import FlowStepLink, StaticLink, ConditionalLink, FallbackLink
+from assistant.task.flow.links import ConditionalLink, FallbackLink, FlowStepLink, StaticLink
 from assistant.task.response.models import ResponseTemplate
+
 
 class FlowStepType(Enum):
     START = "start"

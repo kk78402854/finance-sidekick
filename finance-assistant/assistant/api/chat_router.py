@@ -7,8 +7,8 @@ from dataclasses import asdict
 from fastapi import APIRouter, Depends, Header
 
 from assistant.api.dependencies import get_dialogue_service
-from assistant.api.schemas import ChatRequest, ChatResponse, ChatMessage, ChatObject, HistoryResponse, HistoryMessage
-from assistant.domain.message import UserMessage, ProcessResult, MessageType, MessageObject
+from assistant.api.schemas import ChatMessage, ChatObject, ChatRequest, ChatResponse, HistoryMessage, HistoryResponse
+from assistant.domain.message import MessageObject, MessageType, ProcessResult, UserMessage
 from assistant.domain.state import DialogueState, Session, Turn
 from assistant.service.dialogue_service import DialogueService
 

@@ -91,6 +91,9 @@ services:
       <<: *finance-env
     ports:
       - "8000:8000"
+    # 本地开发：直接挂载源码，改完重启容器即可生效，无需重建镜像
+    volumes:
+      - ../app:/app/app:ro
     depends_on:
       mysql:
         condition: service_healthy
@@ -129,6 +132,12 @@ services:
       TZ: Asia/Shanghai
     ports:
       - "18083:18083"
+    # 本地开发：代码与前端直接挂载宿主机，改完重启容器即可生效，无需重建镜像
+    volumes:
+      - ../finance-assistant/web:/app/web:ro
+      - ../finance-assistant/assistant:/app/assistant:ro
+      - ../finance-assistant/flow_config:/app/flow_config:ro
+      - ../finance-assistant/main.py:/app/main.py:ro
     depends_on:
       mysql:
         condition: service_healthy

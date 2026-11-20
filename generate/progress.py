@@ -3,10 +3,11 @@
 from __future__ import annotations
 
 from collections import deque
+from collections.abc import Iterator
 from contextlib import contextmanager
 from importlib import import_module
 from time import monotonic
-from typing import Any, Iterator
+from typing import Any
 
 
 def _load_rich() -> tuple[Any, Any, Any, Any, Any]:

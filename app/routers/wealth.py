@@ -564,7 +564,8 @@ def confirm_wealth_order(
                 ),
             )
             cursor.execute(
-                "SELECT id, position_status FROM wealth_position WHERE customer_id = %s AND account_id = %s AND product_id = %s",
+                "SELECT id, position_status FROM wealth_position "
+                "WHERE customer_id = %s AND account_id = %s AND product_id = %s",
                 (order["customer_id"], order["account_id"], order["product_id"]),
             )
             position = cursor.fetchone()

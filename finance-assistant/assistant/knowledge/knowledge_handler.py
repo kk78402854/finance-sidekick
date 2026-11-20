@@ -5,7 +5,7 @@
 from assistant.domain.message import BotMessage, UserMessage
 from assistant.domain.state import DialogueState
 from assistant.knowledge.intents import KNOWLEDGE_INTENTS
-from assistant.knowledge.provider import KnowledgeProvider, KnowledgeChunk
+from assistant.knowledge.provider import KnowledgeChunk, KnowledgeProvider
 from assistant.knowledge.registry import KnowledgeProviderRegistry
 from assistant.knowledge.responder import KnowledgeResponder
 

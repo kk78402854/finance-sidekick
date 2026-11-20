@@ -9,14 +9,18 @@ from zoneinfo import ZoneInfo
 
 LOCAL_TZ = ZoneInfo("Asia/Shanghai")
 
+# 单页最大 100 条；页码上限避免超大 OFFSET 拖垮数据库
+MAX_PAGE_SIZE = 100
+MAX_PAGE_NO = 10_000
+
 
 def local_now() -> datetime:
     return datetime.now(LOCAL_TZ).replace(tzinfo=None)
 
 
 def offset_limit(page_no: int, page_size: int) -> tuple[int, int]:
-    normalized_page_no = max(page_no, 1)
-    normalized_page_size = max(min(page_size, 100), 1)
+    normalized_page_no = min(max(page_no, 1), MAX_PAGE_NO)
+    normalized_page_size = max(min(page_size, MAX_PAGE_SIZE), 1)
     return (normalized_page_no - 1) * normalized_page_size, normalized_page_size
 
 

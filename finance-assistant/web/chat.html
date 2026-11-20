@@ -49,7 +49,7 @@
                 <dt>会话 ID</dt><dd id="sessionId" class="mono">-</dd>
               </dl>
               <p class="field-hint" style="margin-top:10px">
-                切换顶栏客户号后，对话中的查询与办理都会改用新身份。
+                对话仅用于办理本人名下业务，办理结果以系统记录为准。
               </p>
             </div>
           </div>
@@ -186,7 +186,7 @@
       setStatus(true);
     } catch (err) {
       typingRow.remove();
-      addMessage("bot", "请求失败：" + err.message + "，请确认后端服务已启动。");
+      addMessage("bot", "服务暂时不可用，请稍后重试。");
       setStatus(false);
     } finally {
       busy = false;
@@ -217,7 +217,7 @@
       setStatus(true);
     } catch (err) {
       typingRow.remove();
-      addMessage("bot", "请求失败：" + err.message);
+      addMessage("bot", "服务暂时不可用，请稍后重试。");
       setStatus(false);
     } finally {
       busy = false;

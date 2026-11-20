@@ -1,0 +1,48 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  data-api:
+    name: 中台 lint + 单测
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.12"
+          enable-cache: true
+      - name: 安装依赖
+        run: uv sync --frozen
+      - name: Ruff
+        run: uv run ruff check .
+      - name: 单元测试（不依赖 MySQL）
+        run: uv run pytest tests/unit -q
+
+  assistant:
+    name: 客服 lint + 单测
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: finance-assistant
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.12"
+          enable-cache: true
+      - name: 安装依赖
+        run: uv sync --frozen
+      - name: Ruff
+        run: uv run ruff check .
+      - name: 单元测试（不连 LLM / MySQL）
+        run: uv run pytest -q

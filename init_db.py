@@ -90,7 +90,7 @@ class MySQLInit:
         """在指定数据库中按分号拆分并顺序执行 SQL 文件内容"""
         conn = None
         try:
-            with open(sql_file_path, "r", encoding="utf-8") as f:
+            with open(sql_file_path, encoding="utf-8") as f:
                 sql = f.read()
             conn = pymysql.connect(**self.conn_conf, database=db_name)
             conn.begin()

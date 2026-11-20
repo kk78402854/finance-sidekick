@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterable
 from datetime import date, datetime, time, timedelta
 from decimal import Decimal
-from typing import Any, Iterable
+from typing import Any
 
 from ..config import GENERATION_DEFAULTS, LAYERS
 from ..db import db

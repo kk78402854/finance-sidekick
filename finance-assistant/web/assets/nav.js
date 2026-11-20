@@ -45,7 +45,7 @@
         <a class="nav-item" href="/"><span class="nav-dot"></span>返回首页</a>
       </div>
       <div class="sidebar-foot">
-        金融中台 · 演示环境<br>客户与服务数据均来自本地测试库
+        金融小二 · v1.4.0<br>服务运行正常 · 7×24 小时在线
       </div>`;
   }
 

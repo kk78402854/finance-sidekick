@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterable
 from datetime import date, datetime, time
 from time import sleep
-from typing import Any, Iterable
+from typing import Any
 from zoneinfo import ZoneInfo
 
 from pymysql.err import OperationalError

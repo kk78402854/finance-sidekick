@@ -16,7 +16,7 @@
       <div class="page-head">
         <div>
           <h1>数据大盘</h1>
-          <div class="sub">统计口径来自中台业务库，列表数据为只读查询</div>
+          <div class="sub">全行业务规模与待办事项总览，数据实时更新</div>
         </div>
         <div class="spacer"></div>
         <button class="btn btn-sm" id="refresh">刷新</button>
@@ -78,7 +78,7 @@
   function renderLoans(items) {
     const el = document.getElementById("loanList");
     if (!items.length) {
-      el.innerHTML = '<div class="empty"><strong>暂无待审批贷款</strong>客户提交申请后会出现在这里</div>';
+      el.innerHTML = '<div class="empty"><strong>暂无待审批贷款</strong>有新申请时会实时出现在这里</div>';
       return;
     }
     el.innerHTML = `<div class="table-wrap"><table><thead><tr>
@@ -95,7 +95,7 @@
   function renderTickets(items) {
     const el = document.getElementById("ticketList");
     if (!items.length) {
-      el.innerHTML = '<div class="empty"><strong>暂无处理中工单</strong>客户提交工单后会出现在这里</div>';
+      el.innerHTML = '<div class="empty"><strong>暂无处理中工单</strong>有新工单时会实时出现在这里</div>';
       return;
     }
     el.innerHTML = `<div class="table-wrap"><table><thead><tr>

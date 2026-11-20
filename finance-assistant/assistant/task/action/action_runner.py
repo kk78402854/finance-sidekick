@@ -3,7 +3,7 @@
 在flowExecutor的action步骤里面进行调用
 """
 from assistant.domain.state import DialogueState
-from assistant.task.action.base import ActionCall, ActionResult, Action
+from assistant.task.action.base import Action, ActionCall, ActionResult
 from assistant.task.action.registry import ActionRegistry
 
 

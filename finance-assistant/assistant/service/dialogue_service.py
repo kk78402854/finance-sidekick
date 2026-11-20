@@ -3,7 +3,7 @@
 调用repository操作数据库
 调用engine处理消息
 """
-from assistant.domain.message import UserMessage, ProcessResult
+from assistant.domain.message import ProcessResult, UserMessage
 from assistant.domain.state import DialogueState
 from assistant.engine.dialogue_engine import DialogueEngine
 from assistant.repository.dialogue_repository import DialogueRepository

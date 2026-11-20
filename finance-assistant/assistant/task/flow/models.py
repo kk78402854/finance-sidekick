@@ -1,5 +1,7 @@
 from dataclasses import dataclass, field
+
 from assistant.task.flow.steps import FlowStep, StartFlowStep
+
 
 @dataclass
 class FlowSlot:

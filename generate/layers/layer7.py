@@ -858,8 +858,7 @@ class Layer7Generator(BaseGenerator):
         return len(self.collection_performance_rows(days))
 
     def iter_collection_performance(self, days: int):
-        for row in self.collection_performance_rows(days):
-            yield row
+        yield from self.collection_performance_rows(days)
 
     def collection_performance_rows(self, days: int) -> list[dict]:
         start_date = dt(days - 1).date()

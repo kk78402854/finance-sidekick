@@ -11,7 +11,7 @@ from assistant.knowledge.intents import KNOWLEDGE_INTENTS
 from assistant.prompts.history_builder import HistoryBuilder
 from assistant.prompts.loader import load_prompt
 from assistant.prompts.models import TurnPlan
-from assistant.task.flow.models import FlowCatalog, Flow
+from assistant.task.flow.models import Flow, FlowCatalog
 from assistant.utils.llm import llm
 
 """

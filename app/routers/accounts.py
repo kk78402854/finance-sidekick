@@ -1685,7 +1685,10 @@ def _post_adjustment_transaction(
                 created_at,
                 updated_at
             )
-            VALUES (%s, %s, %s, %s, %s, 'adjustment', 'success', 'pending', %s, %s, 'reconciliation_adjustment', %s, %s, %s, %s)
+            VALUES (
+                %s, %s, %s, %s, %s, 'adjustment', 'success', 'pending', %s, %s,
+                'reconciliation_adjustment', %s, %s, %s, %s
+            )
             """,
             (
                 transaction_no,

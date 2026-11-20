@@ -10,9 +10,9 @@ from fastapi.staticfiles import StaticFiles
 
 from assistant.api.chat_router import chat_router
 from assistant.api.portal_router import portal_router
-from assistant.utils.db import create_tables, init_db_engine, close_db_engine
+from assistant.utils.db import close_db_engine, create_tables, init_db_engine
 from assistant.utils.finance_readonly_db import close_finance_db
-from assistant.utils.httpx_client import init_http_client, close_http_client
+from assistant.utils.httpx_client import close_http_client, init_http_client
 
 # 静态页面目录（web 下按角色拆成多个页面）
 WEB_DIR = Path(__file__).parents[2] / "web"

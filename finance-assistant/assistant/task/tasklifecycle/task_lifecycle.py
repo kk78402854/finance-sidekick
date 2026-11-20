@@ -1,11 +1,10 @@
 """
 这个模块作用，根据commandProcessor组件返回任务状态变化对象列表生成不同中文提示
 """
-from anyio import TaskFailed
 
 from assistant.domain.message import BotMessage
-from assistant.lifecycle.models import TaskEvent, TaskStarted, TaskSwitched, TaskResumed, TaskCanceled
-from assistant.task.flow.models import FlowCatalog, Flow
+from assistant.lifecycle.models import TaskCanceled, TaskEvent, TaskResumed, TaskStarted, TaskSwitched
+from assistant.task.flow.models import Flow, FlowCatalog
 
 
 class TaskLifecycleResponder:

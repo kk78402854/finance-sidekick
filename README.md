@@ -1,5 +1,10 @@
 # 金融小二 · Finance Sidekick
 
+[![CI](https://github.com/kk78402854/finance-sidekick/actions/workflows/ci.yml/badge.svg)](https://github.com/kk78402854/finance-sidekick/actions/workflows/ci.yml)
+![Python](https://img.shields.io/badge/Python-3.12-3776AB?logo=python&logoColor=white)
+![FastAPI](https://img.shields.io/badge/FastAPI-0.115%2B-009688?logo=fastapi&logoColor=white)
+![Tests](https://img.shields.io/badge/tests-53%20passed-brightgreen)
+
 面向零售银行的**金融业务中台 + 智能对话客服 + 业务门户**一体化演示项目。
 
 中台用 FastAPI + MySQL 模拟真实银行核心链路（开户、账户、交易、授信、贷款、还款、风控、催收、工单），
@@ -62,6 +67,33 @@
 
 ---
 
+## 工程质量与可观测性
+
+### 质量门禁
+
+- **CI**：GitHub Actions 两个 job（中台 / 客服）分别执行 `ruff check` 与 `pytest`，推送即校验
+- **静态检查**：ruff 统一 `py312`、行宽 120、规则 `E/F/W/I/UP`
+- **单元测试**：`tests/unit/` 53 条，不依赖 MySQL / LLM / 外网，覆盖幂等、分页、校验器、
+  请求 ID、限流、指标、审计脱敏、异常处理器与鉴权辅助函数
+
+### 请求链路
+
+- 每个响应都带 `X-Request-Id`：调用方传入合法 ID 则透传，否则自动生成，响应体 `request_id` 与之一致
+- 结构化 JSON 日志自动携带 `request_id`，一次请求的访问日志、业务日志、审计记录可串联
+- 全局异常兜底：业务异常 → 4xx 业务码；参数校验 → 422 字段级明细；DB 不可用 → 503；
+  未捕获异常 → 500，均返回统一响应体
+
+### 运行时可观测
+
+| 能力 | 入口 / 说明 |
+| --- | --- |
+| 指标 | `GET /metrics`，Prometheus 文本格式，含请求计数与延迟直方图 |
+| 限流 | 写接口按主体/IP 滑动窗口限流，默认 240 次/分钟，超限返回 429 `RATE_LIMITED` |
+| 审计 | `operation_audit_log` 表记录写操作（请求 ID、渠道、操作员、耗时），凭证只存 SHA-256 摘要 |
+| 审计查询 | `GET /api/v1/audit/logs`，仅员工身份可查 |
+
+---
+
 ## 系统架构
 
 ```
@@ -95,18 +127,28 @@
 
 ```
 finance-data/
+├── .github/workflows/ci.yml # CI：ruff + pytest
 ├── app/                     # 金融中台 FastAPI 服务（routers / 鉴权 / 幂等 / 响应体）
+│   ├── middleware.py        # 请求 ID、访问日志、限流、指标、审计
+│   ├── logging_config.py    # 结构化 JSON 日志
+│   ├── metrics.py           # Prometheus 文本指标
+│   ├── audit.py             # 写操作审计
+│   └── validators.py        # 通用业务参数校验
 ├── generate/                # 分层测试数据生成器（9 层，全量约 5 万客户）
 ├── seeds/                   # 维度与产品种子数据（CSV）
 ├── sql/finance.sql          # 建表脚本
-├── tests/                   # 接口链路与路由覆盖测试
+├── tests/
+│   ├── unit/                # 53 条纯逻辑单元测试（不依赖 MySQL）
+│   └── *.py                 # 接口链路与路由覆盖测试
 ├── docs/screenshots/        # README 截图
 ├── 文档/                     # 设计文档（总览 + 客服 6 篇 + Docker 部署）
+│   └── 完善/                 # 代码补强实施计划与阶段汇报
 ├── docker/                  # docker-compose.yaml / docker-compose.full.yaml
 ├── init_db.py               # 建库建表
 └── finance-assistant/       # 智能客服 + 业务门户
     ├── assistant/           # 引擎、流程、Action、知识库、仓储、门户 BFF
     ├── flow_config/         # 7 个金融对话流程（YAML）
+    ├── tests/               # 客服侧冒烟测试
     └── web/                 # 12 个页面 + app.css / api.js / nav.js
 ```
 
@@ -170,6 +212,9 @@ uv run python main.py                    # http://127.0.0.1:18083
 | `DB_USER` / `DB_PASSWORD` | `root` / `******` | 数据库账号 |
 | `DB_NAME` | `finance` | 业务库 |
 | `APP_PORT` | `8000` | 服务端口 |
+| `LOG_LEVEL` | `INFO` | 日志级别 |
+| `RATE_LIMIT_PER_MINUTE` | `240` | 写接口限流阈值，设为 `0` 关闭 |
+| `METRICS_ENABLED` | `1` | 设为 `0` 关闭 `/metrics` |
 
 **客服 `finance-assistant/.env`**
 
@@ -220,6 +265,8 @@ uv run python main.py                    # http://127.0.0.1:18083
 | [文档/04-知识检索与Prompt.md](文档/04-知识检索与Prompt.md) | 意图、Provider、FAQ、RAG 与四个 Prompt |
 | [文档/05-测试验收.md](文档/05-测试验收.md) | 验收用例、联调脚本、异常、风险与 DoD |
 | [文档/06-Docker部署与启动.md](文档/06-Docker部署与启动.md) | Docker Compose 全栈部署与 FAQ |
+| [文档/完善/00-补强实施计划.md](文档/完善/00-补强实施计划.md) | 分模块补强路线：健壮性、并发、RAG、SSE、可观测性 |
+| [文档/完善/01-阶段汇报-M0-M1.md](文档/完善/01-阶段汇报-M0-M1.md) | 基线治理与中台健壮性改动清单、测试教程与复核记录 |
 | [文档/全流程和全类图/](文档/全流程和全类图/) | 整体流程详解与模型类图详解 |
 
 ---

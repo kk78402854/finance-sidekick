@@ -10,6 +10,7 @@
 from dataclasses import dataclass
 from typing import Any
 
+
 # 数据模型，封装意图识别组件返回数据
 @dataclass
 class Command:

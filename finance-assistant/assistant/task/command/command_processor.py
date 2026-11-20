@@ -5,8 +5,8 @@ import uuid
 
 from assistant.domain.state import DialogueState, TaskInstance
 from assistant.lifecycle.models import TaskEvent
-from assistant.plan.command import Command, StartFlowCommand, SetSlotsCommand, CancelTaskCommand, ResumeTaskCommand
-from assistant.task.flow.models import FlowCatalog, Flow
+from assistant.plan.command import CancelTaskCommand, Command, ResumeTaskCommand, SetSlotsCommand, StartFlowCommand
+from assistant.task.flow.models import Flow, FlowCatalog
 from assistant.task.flow.steps import FlowStep
 
 

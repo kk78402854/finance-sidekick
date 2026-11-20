@@ -24,7 +24,8 @@ async def overview() -> dict:
           (SELECT COALESCE(SUM(total_limit_amount), 0) FROM credit_limit) AS total_limit,
           (SELECT COALESCE(SUM(available_limit_amount), 0) FROM credit_limit) AS available_limit,
           (SELECT COUNT(*) FROM account_transaction) AS transaction_count,
-          (SELECT COUNT(*) FROM loan_application WHERE application_status IN ('submitted', 'processing')) AS loan_pending,
+          (SELECT COUNT(*) FROM loan_application
+           WHERE application_status IN ('submitted', 'processing')) AS loan_pending,
           (SELECT COUNT(*) FROM support_ticket WHERE ticket_status IN ('submitted', 'processing')) AS ticket_pending
         """
     ) or {}

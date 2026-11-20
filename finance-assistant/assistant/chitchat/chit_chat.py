@@ -4,7 +4,7 @@
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import PromptTemplate
 
-from assistant.domain.message import UserMessage, BotMessage
+from assistant.domain.message import BotMessage, UserMessage
 from assistant.domain.state import DialogueState
 from assistant.prompts.history_builder import HistoryBuilder
 from assistant.prompts.loader import load_prompt

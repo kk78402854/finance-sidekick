@@ -5,17 +5,17 @@ from pathlib import Path
 
 from assistant.chitchat.chit_chat import ChitChatHandler
 from assistant.clarify.clarify_response import ClarifyResponse
-from assistant.domain.message import UserMessage, ProcessResult, BotMessage, MessageType
+from assistant.domain.message import BotMessage, MessageType, ProcessResult, UserMessage
 from assistant.domain.object_slots import can_fill_slot, object_slot_values
-from assistant.domain.state import DialogueState, Turn, FocusedObject
+from assistant.domain.state import DialogueState, FocusedObject, Turn
 from assistant.knowledge.knowledge_handler import KnowledgeHandler
 from assistant.plan.command import SetSlotsCommand
 from assistant.plan.turn_plan_validator import TurnPlanValidator
 from assistant.plan.turn_planner import TurnPlanner
-from assistant.prompts.models import TurnPlan, TurnPlanValidationResult, ClarifyReason
+from assistant.prompts.models import ClarifyReason, TurnPlan, TurnPlanValidationResult
 from assistant.task.flow.loader import FlowLoader
-from assistant.task.flow.models import FlowCatalog, Flow
-from assistant.task.flow.steps import FlowStep, CollectSlotStep
+from assistant.task.flow.models import Flow, FlowCatalog
+from assistant.task.flow.steps import CollectSlotStep, FlowStep
 from assistant.task.task_handler import TaskHandler
 
 """

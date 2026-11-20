@@ -5,7 +5,6 @@
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import PromptTemplate
 
-from assistant.api.schemas import HistoryMessage
 from assistant.domain.message import BotMessage, UserMessage
 from assistant.domain.state import DialogueState
 from assistant.knowledge.provider import KnowledgeChunk

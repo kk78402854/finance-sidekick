@@ -1,8 +1,9 @@
 import time
 import uuid
 from dataclasses import dataclass, field
-from assistant.domain.message import UserMessage, BotMessage
-from assistant.lifecycle.models import TaskEvent, TaskSwitched, TaskRef, TaskStarted, TaskResumed, TaskCanceled
+
+from assistant.domain.message import BotMessage, UserMessage
+from assistant.lifecycle.models import TaskCanceled, TaskEvent, TaskRef, TaskResumed, TaskStarted, TaskSwitched
 
 
 # 一轮对话，一个问题对应一个或者多个回答
@@ -123,7 +124,7 @@ class TaskState:
 
         # 2 判断恢复任务是否找到
         if target_task is None:
-            raise Exception(f"Task not found in paused tasks")
+            raise Exception("Task not found in paused tasks")
 
         # 3 如果找到恢复任务
         ## 判断当前是否活跃任务
@@ -165,7 +166,7 @@ class TaskState:
                         task=target_task
                     )
 
-            raise Exception(f"Task not found in paused tasks")
+            raise Exception("Task not found in paused tasks")
 
 
 @dataclass

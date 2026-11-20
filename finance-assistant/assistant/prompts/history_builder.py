@@ -1,7 +1,7 @@
 import json
 from dataclasses import asdict
 
-from assistant.domain.message import UserMessage, MessageType, BotMessage
+from assistant.domain.message import BotMessage, MessageType, UserMessage
 from assistant.domain.state import Turn
 
 

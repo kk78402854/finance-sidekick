@@ -16,7 +16,7 @@
       <div class="page-head">
         <div>
           <h1>我的工单</h1>
-          <div class="sub">提交后会进入管理员工单工作台，处理结果会同步到列表中</div>
+          <div class="sub">提交投诉、挂失与咨询工单，实时跟踪处理进度</div>
         </div>
         <div class="spacer"></div>
         <button class="btn btn-sm" id="refresh">刷新</button>
@@ -59,11 +59,11 @@
           </div>
         </div>
         <div class="card">
-          <div class="card-head"><h3>处理说明</h3></div>
+          <div class="card-head"><h3>服务说明</h3></div>
           <div class="card-body" style="font-size:13px;color:var(--text-500);line-height:1.9">
-            <p>1. 工单由中台创建，生成工单号并关联处理流程。</p>
-            <p>2. 管理员在“工单处理”页面受理或驳回。</p>
-            <p>3. 处理结果会写回中台，刷新本页即可查看。</p>
+            <p>1. 工单提交成功后自动生成工单号，并关联对应处理流程。</p>
+            <p>2. 客服专员受理后跟进处理，可在下方列表查看进度。</p>
+            <p>3. 处理完成后结果实时同步，请注意查收。</p>
             <p style="margin-top:10px">挂失类工单请补充卡号后四位与丢失时间，便于快速处理。</p>
           </div>
         </div>
@@ -144,7 +144,7 @@
 
   function renderTable(items) {
     if (!items.length) {
-      tableEl.innerHTML = '<div class="empty"><strong>暂无工单</strong>可在上方提交第一张工单</div>';
+      tableEl.innerHTML = '<div class="empty"><strong>暂无工单记录</strong>可使用上方表单提交</div>';
       return;
     }
     tableEl.innerHTML = `<div class="table-wrap"><table>

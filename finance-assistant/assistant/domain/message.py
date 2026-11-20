@@ -3,9 +3,9 @@ from enum import Enum
 
 """
     m1 = MessageObject()
-    
+
     m2 = MessageObject()
-    
+
     m1.attributes.id = '100'
     m2.attributes.id
 """

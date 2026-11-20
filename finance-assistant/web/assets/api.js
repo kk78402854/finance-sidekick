@@ -67,6 +67,23 @@
   const get = (path, query) => request("GET", path, { query });
   const post = (path, body) => request("POST", path, { body });
 
+  // 站点图标：内联 SVG，无外链依赖，内网环境也可正常显示
+  (function injectFavicon() {
+    const link = document.createElement("link");
+    link.rel = "icon";
+    link.type = "image/svg+xml";
+    link.href =
+      "data:image/svg+xml," +
+      encodeURIComponent(
+        '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">' +
+          '<rect width="32" height="32" rx="6" fill="#1f3038"/>' +
+          '<text x="16" y="21.5" font-family="PingFang SC,Microsoft YaHei,sans-serif" ' +
+          'font-size="16" font-weight="500" fill="#ffffff" text-anchor="middle">融</text>' +
+          "</svg>"
+      );
+    document.head.appendChild(link);
+  })();
+
   // 首次打开页面时补上演示身份，避免每个页面都要求手动输入
   async function ensureIdentity() {
     if (identity.customerNo && identity.operatorNo) return identity;

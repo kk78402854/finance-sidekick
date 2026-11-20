@@ -32,14 +32,14 @@
   <section class="hero">
     <h1>一套中台能力，三种使用视角</h1>
     <p>
-      客户可以自助查询账户、交易、授信与贷款，并提交工单；管理员可以查看数据大盘、
-      客户全量信息和待办审批；AI 对话助手则把同一批中台接口变成自然语言服务。
-      页面顶部的客户号与员工号可随时切换，不再依赖后端写死的演示身份。
+      客户可自助查询账户、交易、授信与贷款，并提交工单；管理员可查看数据大盘、
+      客户全景信息与待办审批；AI 对话助手则将同一批业务能力以自然语言的方式开放。
+      全部页面共享统一身份，数据实时同步。
     </p>
     <div class="btn-row">
       <a class="btn btn-primary" href="/customer/profile">进入客户视角</a>
       <a class="btn" href="/admin/dashboard">进入管理员视角</a>
-      <a class="btn" href="/chat">和 AI 助手聊聊</a>
+      <a class="btn" href="/chat">咨询 AI 助手</a>
     </div>
   </section>
 
@@ -75,14 +75,11 @@
     <div class="feature"><strong>数据大盘</strong>客户、账户、授信、交易规模与待办数量一屏掌握</div>
   </div>
 
-  <div class="section-title">演示提示</div>
-  <div class="card">
-    <div class="card-body" style="color:var(--text-500);font-size:13px">
-      默认客户号为 <b>CUS00000001</b>，默认员工号为 <b>EMP000001</b>。
-      切换客户号后，客户视角的全部接口都会以该客户身份调用中台，越权访问会被中台拒绝。
-      管理端的列表与大盘数据来自本地测试库，审批与工单处理会真实写入中台。
-    </div>
-  </div>
+  <footer class="home-foot">
+    <span>© 2026 金融小二 · 业务门户 v1.4.0</span>
+    <span class="topbar-spacer"></span>
+    <span>数据由金融中台实时提供 · 敏感操作全程留痕</span>
+  </footer>
 
 </div>
 

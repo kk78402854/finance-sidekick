@@ -4,15 +4,16 @@
 前端通过 X-Customer-No / X-Operator-No 传当前身份，这里再按该身份调用中台，
 彻底去掉对 .env 里写死客户号的依赖。
 """
+from collections.abc import Awaitable, Callable
 from decimal import Decimal
-from typing import Annotated, Any, Awaitable, Callable
+from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Query
+from pydantic import BaseModel
 
 from assistant.conf.config import settings
 from assistant.service import portal_service
 from assistant.utils.finance_client import FinanceError
-from pydantic import BaseModel
 
 portal_router = APIRouter(prefix="/api/portal", tags=["portal"])
 

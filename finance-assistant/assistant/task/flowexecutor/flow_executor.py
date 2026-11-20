@@ -6,10 +6,16 @@ from assistant.domain.object_slots import object_slot_values
 from assistant.domain.state import DialogueState
 from assistant.task.action.action_runner import ActionRunner
 from assistant.task.action.base import ActionCall, ActionResult
-from assistant.task.flow.links import FlowStepLink, ConditionalLink, FallbackLink
-from assistant.task.flow.models import FlowCatalog, Flow
-from assistant.task.flow.steps import FlowStep, StartFlowStep, ResponseFlowStep, CollectSlotStep, ActionFlowStep, \
-    EndFlowStep
+from assistant.task.flow.links import ConditionalLink, FallbackLink, FlowStepLink
+from assistant.task.flow.models import Flow, FlowCatalog
+from assistant.task.flow.steps import (
+    ActionFlowStep,
+    CollectSlotStep,
+    EndFlowStep,
+    FlowStep,
+    ResponseFlowStep,
+    StartFlowStep,
+)
 from assistant.task.response.response_render import ResponseRender
 
 

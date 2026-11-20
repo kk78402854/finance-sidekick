@@ -23,7 +23,6 @@ from assistant.utils.finance_client import (
     finance_request,
     money,
     resolve_customer_no,
-    to_decimal,
 )
 
 

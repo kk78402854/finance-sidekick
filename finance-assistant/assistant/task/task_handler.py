@@ -6,9 +6,9 @@ tasklifecycle：生成中文提示
 flowExecutor：按照步骤推进
 把最终结果合并，返回用户
 """
-from assistant.domain.message import UserMessage, BotMessage
+from assistant.domain.message import BotMessage, UserMessage
 from assistant.domain.state import DialogueState
-from assistant.lifecycle.models import TaskRef, TaskEvent
+from assistant.lifecycle.models import TaskEvent
 from assistant.plan.command import Command
 from assistant.task.command.command_processor import CommandProcessor
 from assistant.task.flow.models import FlowCatalog

@@ -20,8 +20,19 @@ dev = [
     "ruff>=0.15.17",
 ]
 
+[tool.ruff]
+target-version = "py312"
+line-length = 120
+exclude = [".venv", "__pycache__", "docs", "seeds"]
+
 [tool.ruff.lint]
-extend-select = ["I"]
+# 只启用有明确收益且不会对 FastAPI 惯用写法产生误报的规则。
+select = ["E", "F", "W", "I", "UP"]
+
+[tool.ruff.lint.per-file-ignores]
+# 数据生成与集成测试里有大量长 SQL / 断言，行宽不是这里的质量重点。
+"generate/**" = ["E501"]
+"tests/**" = ["E501"]
 
 [tool.pyright]
 pythonVersion = "3.12"
@@ -29,3 +40,8 @@ typeCheckingMode = "basic"
 
 [tool.pytest.ini_options]
 pythonpath = ["."]
+testpaths = ["tests"]
+addopts = "-q"
+markers = [
+    "integration: 需要本地 MySQL 与已生成的业务数据的集成测试",
+]

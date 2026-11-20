@@ -1,7 +1,6 @@
 """
 这个模块作用：读取.env文件内容
 """
-import os
 from pathlib import Path
 
 from pydantic_settings import BaseSettings, SettingsConfigDict

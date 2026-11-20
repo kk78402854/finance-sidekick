@@ -7,8 +7,9 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, Query
 
+from ..audit import fetch_audit_logs
 from ..database import fetch_all
-from ..dependencies import RequestContext, get_request_context
+from ..dependencies import RequestContext, ensure_employee_access, get_request_context
 from ..response import ok
 from ..utils import serialize_rows
 
@@ -257,6 +258,18 @@ def list_employees(
         item["permission_codes"] = _json_list(item["permission_codes"])
         payload.append(item)
     return ok({"list": serialize_rows(payload)}, ctx.request_id)
+
+
+@router.get("/audit/logs", summary="查询写操作审计日志")
+def list_audit_logs(
+    ctx: Annotated[RequestContext, Depends(get_request_context)],
+    limit: int = Query(description="返回条数", default=50, ge=1, le=200),
+    offset: int = Query(description="偏移量", default=0, ge=0),
+) -> dict[str, object]:
+    # 审计日志仅员工可见，客户身份一律拒绝
+    ensure_employee_access(ctx)
+    rows = fetch_audit_logs(limit=limit, offset=offset)
+    return ok({"list": serialize_rows(rows), "limit": limit, "offset": offset}, ctx.request_id)
 
 
 def _build_branch_tree(rows: list[dict[str, object]]) -> list[dict[str, object]]:

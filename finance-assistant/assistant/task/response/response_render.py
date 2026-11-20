@@ -8,7 +8,7 @@ from langchain_core.prompts import PromptTemplate
 from assistant.domain.message import BotMessage, UserMessage
 from assistant.domain.state import DialogueState
 from assistant.prompts.history_builder import HistoryBuilder
-from assistant.task.response.models import ResponseTemplate, ResponseMode
+from assistant.task.response.models import ResponseMode, ResponseTemplate
 from assistant.utils.llm import llm
 
 

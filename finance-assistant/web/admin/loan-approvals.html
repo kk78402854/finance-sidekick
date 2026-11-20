@@ -7,7 +7,7 @@
 <link rel="stylesheet" href="/static/assets/app.css" />
 </head>
 <body data-role="admin" data-page="loan-approvals"
-      data-title="贷款审批" data-subtitle="待审批贷款与审批结果回写">
+      data-title="贷款审批" data-subtitle="处理待审批申请，审批通过自动完成签约与放款">
 <div class="app">
   <aside class="sidebar" id="sidebar"></aside>
   <div class="main">
@@ -16,7 +16,7 @@
       <div class="page-head">
         <div>
           <h1>贷款审批</h1>
-          <div class="sub">审批结果通过中台审批接口写入，保留操作员与审批意见</div>
+          <div class="sub">审批通过将自动完成签约与放款，操作全程留痕</div>
         </div>
         <div class="spacer"></div>
         <button class="btn btn-sm" id="refresh">刷新</button>
@@ -108,7 +108,7 @@
 
   function renderTable(items) {
     if (!items.length) {
-      tableEl.innerHTML = '<div class="empty"><strong>当前筛选下没有申请</strong>客户在“授信与贷款”提交后会出现在这里</div>';
+      tableEl.innerHTML = '<div class="empty"><strong>暂无符合条件的申请</strong>请调整筛选条件后重试</div>';
       return;
     }
     tableEl.innerHTML = `<div class="table-wrap"><table>

@@ -16,7 +16,7 @@
       <div class="page-head">
         <div>
           <h1>工单处理</h1>
-          <div class="sub">处理动作会完成中台流程任务，结果写回工单状态</div>
+          <div class="sub">受理与驳回客户工单，处理结果实时同步客户侧</div>
         </div>
         <div class="spacer"></div>
         <button class="btn btn-sm" id="refresh">刷新</button>
@@ -104,7 +104,7 @@
 
   function renderTable(items) {
     if (!items.length) {
-      tableEl.innerHTML = '<div class="empty"><strong>当前筛选下没有工单</strong>客户在“我的工单”提交后会出现在这里</div>';
+      tableEl.innerHTML = '<div class="empty"><strong>暂无符合条件的工单</strong>请调整筛选条件后重试</div>';
       return;
     }
     tableEl.innerHTML = `<div class="table-wrap"><table>
