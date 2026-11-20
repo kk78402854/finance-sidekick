@@ -1,0 +1,302 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#2563eb"/>
+      <stop offset="42%" stop-color="#4f46e5"/>
+      <stop offset="72%" stop-color="#7c3aed"/>
+      <stop offset="100%" stop-color="#c026d3"/>
+    </linearGradient>
+    <linearGradient id="card" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.24"/>
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0.08"/>
+    </linearGradient>
+    <linearGradient id="cardGreen" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#a7f3a0" stop-opacity="0.34"/>
+      <stop offset="100%" stop-color="#4ade80" stop-opacity="0.16"/>
+    </linearGradient>
+    <linearGradient id="diamond" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#ffd97a"/>
+      <stop offset="100%" stop-color="#f59e0b"/>
+    </linearGradient>
+    <linearGradient id="iconBlue" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#93c5fd"/>
+      <stop offset="100%" stop-color="#3b82f6"/>
+    </linearGradient>
+    <linearGradient id="iconGreen" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#86efac"/>
+      <stop offset="100%" stop-color="#22c55e"/>
+    </linearGradient>
+    <linearGradient id="iconPurple" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#c4b5fd"/>
+      <stop offset="100%" stop-color="#8b5cf6"/>
+    </linearGradient>
+    <filter id="shadow" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="5" stdDeviation="7" flood-color="#0b1a4d" flood-opacity="0.35"/>
+    </filter>
+    <filter id="blur" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="55"/>
+    </filter>
+    <pattern id="dots" width="18" height="18" patternUnits="userSpaceOnUse">
+      <circle cx="2" cy="2" r="1.4" fill="#ffffff" fill-opacity="0.45"/>
+    </pattern>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#e6efff" fill-opacity="0.85"/>
+    </marker>
+    <style>
+      .t { font-family: "Microsoft YaHei", "PingFang SC", "Segoe UI", sans-serif; fill: #ffffff; }
+      .main { font-size: 16px; font-weight: 700; }
+      .sub { font-size: 11.5px; fill: #e4edff; fill-opacity: 0.82; }
+      .dmain { font-size: 17px; font-weight: 800; fill: #4a2a00; }
+      .pill { font-size: 11.5px; font-weight: 700; fill: #4a2a00; }
+      .line { fill: none; stroke: #e6efff; stroke-opacity: 0.72; stroke-width: 2; stroke-linecap: round; }
+      .icon { fill: none; stroke: #ffffff; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
+    </style>
+  </defs>
+
+  <!-- 背景 -->
+  <rect width="1024" height="1024" rx="18" fill="url(#bg)"/>
+  <ellipse cx="120" cy="120" rx="260" ry="220" fill="#22d3ee" fill-opacity="0.30" filter="url(#blur)"/>
+  <ellipse cx="930" cy="880" rx="300" ry="260" fill="#f472b6" fill-opacity="0.28" filter="url(#blur)"/>
+  <ellipse cx="880" cy="120" rx="200" ry="180" fill="#818cf8" fill-opacity="0.30" filter="url(#blur)"/>
+  <rect x="846" y="16" width="160" height="150" fill="url(#dots)" opacity="0.55"/>
+  <rect x="18" y="856" width="170" height="150" fill="url(#dots)" opacity="0.45"/>
+  <circle cx="905" cy="252" r="34" fill="none" stroke="#ffffff" stroke-opacity="0.18" stroke-width="2"/>
+  <circle cx="108" cy="804" r="52" fill="none" stroke="#ffffff" stroke-opacity="0.12" stroke-width="2"/>
+
+  <!-- 标题 -->
+  <text class="t" x="512" y="44" text-anchor="middle" font-size="28" font-weight="800" letter-spacing="0.5">DialogueEngine.process_message 流程图</text>
+  <rect x="392" y="58" width="240" height="3" rx="1.5" fill="#ffffff" fill-opacity="0.55"/>
+  <text class="t" x="512" y="80" text-anchor="middle" font-size="12.5" fill-opacity="0.82">金融小二 · 智能客服对话引擎主链路（LLM 只做规划，校验与执行确定性）</text>
+  <text x="198" y="42" font-size="16" fill="#ffffff" fill-opacity="0.9">✦</text>
+  <text x="816" y="42" font-size="16" fill="#ffffff" fill-opacity="0.9">✦</text>
+
+  <!-- 连接线 -->
+  <path class="line" d="M512,148 L512,168" marker-end="url(#arrow)"/>
+  <path class="line" d="M512,224 L512,244" marker-end="url(#arrow)"/>
+  <path class="line" d="M512,300 L512,310" marker-end="url(#arrow)"/>
+  <path class="line" d="M407,352 L250,352 L250,418" marker-end="url(#arrow)"/>
+  <path class="line" d="M617,352 L810,352 L810,418" marker-end="url(#arrow)"/>
+  <path class="line" d="M250,476 L250,496" marker-end="url(#arrow)"/>
+  <path class="line" d="M250,554 L250,570" marker-end="url(#arrow)"/>
+  <path class="line" d="M250,650 L250,662 M83,662 L515,662"/>
+  <path class="line" d="M83,662 L83,676" marker-end="url(#arrow)"/>
+  <path class="line" d="M227,662 L227,676" marker-end="url(#arrow)"/>
+  <path class="line" d="M371,662 L371,676" marker-end="url(#arrow)"/>
+  <path class="line" d="M515,662 L515,676" marker-end="url(#arrow)"/>
+  <path class="line" d="M700,734 L700,770 M930,734 L930,770 M83,734 L83,770 M227,734 L227,770 M371,734 L371,770 M515,734 L515,770 M83,770 L930,770 M512,770 L512,795" marker-end="url(#arrow)"/>
+  <path class="line" d="M512,851 L512,872" marker-end="url(#arrow)"/>
+  <path class="line" d="M810,476 L810,520" marker-end="url(#arrow)"/>
+  <path class="line" d="M660,580 L700,580 L700,676" marker-end="url(#arrow)"/>
+  <path class="line" d="M960,580 L930,580 L930,676" marker-end="url(#arrow)"/>
+
+  <!-- 节点 A/B/C -->
+  <g filter="url(#shadow)">
+    <rect x="357" y="92" width="310" height="56" rx="11" fill="url(#card)" stroke="#ffffff" stroke-opacity="0.45"/>
+    <rect x="369" y="105" width="30" height="30" rx="8" fill="url(#iconBlue)" stroke="#ffffff" stroke-opacity="0.5"/>
+    <g transform="translate(384,120)">
+      <circle class="icon" r="4.5"/>
+      <path class="icon" d="M0,-9 L0,-6 M0,6 L0,9 M-9,0 L-6,0 M6,0 L9,0 M-6.4,-6.4 L-4.2,-4.2 M4.2,4.2 L6.4,6.4 M-6.4,6.4 L-4.2,4.2 M4.2,-4.2 L6.4,-6.4"/>
+    </g>
+    <text class="t main" x="410" y="116">A　DialogueEngine.process_message</text>
+    <text class="t sub" x="410" y="134">接收用户消息，编排整轮对话</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="357" y="168" width="310" height="56" rx="11" fill="url(#card)" stroke="#ffffff" stroke-opacity="0.45"/>
+    <rect x="369" y="181" width="30" height="30" rx="8" fill="url(#iconBlue)" stroke="#ffffff" stroke-opacity="0.5"/>
+    <g transform="translate(384,196)">
+      <circle class="icon" cx="0" cy="-3.5" r="4.2"/>
+      <path class="icon" d="M-8,9 C-8,3.8 -4.6,1.5 0,1.5 C4.6,1.5 8,3.8 8,9"/>
+    </g>
+    <text class="t main" x="410" y="192">B　准备 Session</text>
+    <text class="t sub" x="410" y="210">无会话新建；超 60 分钟重建并清空任务</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="357" y="244" width="310" height="56" rx="11" fill="url(#card)" stroke="#ffffff" stroke-opacity="0.45"/>
+    <rect x="369" y="257" width="30" height="30" rx="8" fill="url(#iconBlue)" stroke="#ffffff" stroke-opacity="0.5"/>
+    <g transform="translate(384,272)">
+      <rect class="icon" x="-7" y="-9" width="14" height="18" rx="2"/>
+      <path class="icon" d="M-4,-4 L4,-4 M-4,0 L4,0 M-4,4 L1,4"/>
+    </g>
+    <text class="t main" x="410" y="268">C　创建 Turn</text>
+    <text class="t sub" x="410" y="286">封装本轮用户消息，等待追加回复</text>
+  </g>
+
+  <!-- D 菱形 -->
+  <g filter="url(#shadow)">
+    <polygon points="512,310 617,352 512,394 407,352" fill="url(#diamond)" stroke="#ffe6ae" stroke-width="1.6"/>
+    <text class="dmain" x="512" y="358" text-anchor="middle">D　消息类型？</text>
+  </g>
+  <g>
+    <rect x="296" y="338" width="66" height="19" rx="9.5" fill="#fbbf24" stroke="#ffe6ae" stroke-width="1"/>
+    <text class="pill" x="329" y="351" text-anchor="middle">文本消息</text>
+    <rect x="662" y="338" width="66" height="19" rx="9.5" fill="#fbbf24" stroke="#ffe6ae" stroke-width="1"/>
+    <text class="pill" x="695" y="351" text-anchor="middle">对象消息</text>
+  </g>
+
+  <!-- E/G -->
+  <g filter="url(#shadow)">
+    <rect x="95" y="418" width="310" height="58" rx="11" fill="url(#card)" stroke="#ffffff" stroke-opacity="0.45"/>
+    <rect x="107" y="432" width="30" height="30" rx="8" fill="url(#iconPurple)" stroke="#ffffff" stroke-opacity="0.5"/>
+    <g transform="translate(122,447)">
+      <circle class="icon" r="7.5"/>
+      <circle class="icon" r="3"/>
+      <circle cx="0" cy="0" r="1.3" fill="#ffffff"/>
+    </g>
+    <text class="t main" x="148" y="442">E　TurnPlanner</text>
+    <text class="t sub" x="148" y="461">LLM 输出 TurnPlan（三选一）</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="95" y="496" width="310" height="58" rx="11" fill="url(#card)" stroke="#ffffff" stroke-opacity="0.45"/>
+    <rect x="107" y="510" width="30" height="30" rx="8" fill="url(#iconBlue)" stroke="#ffffff" stroke-opacity="0.5"/>
+    <g transform="translate(122,525)">
+      <path class="icon" d="M0,-10 L8,-6 L8,2 C8,7 4,9.5 0,11 C-4,9.5 -8,7 -8,2 L-8,-6 Z"/>
+      <path class="icon" d="M-4,0 L-1,3 L4,-2"/>
+    </g>
+    <text class="t main" x="148" y="520">G　TurnPlanValidator</text>
+    <text class="t sub" x="148" y="539">FlowCatalog + State 确定性校验，失败转澄清</text>
+  </g>
+
+  <!-- H 菱形 -->
+  <g filter="url(#shadow)">
+    <polygon points="250,570 368,610 250,650 132,610" fill="url(#diamond)" stroke="#ffe6ae" stroke-width="1.6"/>
+    <text class="dmain" x="250" y="616" text-anchor="middle">H　本轮计划结果？</text>
+  </g>
+
+  <!-- 左侧四个处理卡片 -->
+  <g filter="url(#shadow)">
+    <rect x="15" y="676" width="136" height="58" rx="10" fill="url(#cardGreen)" stroke="#bbf7d0" stroke-opacity="0.75"/>
+    <rect x="25" y="690" width="26" height="26" rx="7" fill="url(#iconGreen)"/>
+    <g transform="translate(38,703)">
+      <path class="icon" d="M-7,-7 C-4,-9 0,-9 0,-7 L0,7 C0,5 -4,5 -7,7 Z M7,-7 C4,-9 0,-9 0,-7"/>
+      <path class="icon" d="M0,-7 L0,7"/>
+    </g>
+    <text class="t main" x="56" y="695" font-size="12.5">I Knowledge</text>
+    <text class="t sub" x="56" y="712" font-size="10">知识检索</text>
+    <text class="t sub" x="56" y="726" font-size="10">FAQ / RAG</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="159" y="676" width="136" height="58" rx="10" fill="url(#cardGreen)" stroke="#bbf7d0" stroke-opacity="0.75"/>
+    <rect x="169" y="690" width="26" height="26" rx="7" fill="url(#iconGreen)"/>
+    <g transform="translate(182,703)">
+      <circle class="icon" r="8"/>
+      <circle cx="-3" cy="-2.5" r="1.2" fill="#ffffff"/>
+      <circle cx="3" cy="-2.5" r="1.2" fill="#ffffff"/>
+      <path class="icon" d="M-3.5,3 C-2,5 2,5 3.5,3"/>
+    </g>
+    <text class="t main" x="202" y="695" font-size="12.5">J ChitChat</text>
+    <text class="t sub" x="202" y="712" font-size="10">闲聊寒暄</text>
+    <text class="t sub" x="202" y="726" font-size="10">非业务问题</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="303" y="676" width="136" height="58" rx="10" fill="url(#cardGreen)" stroke="#bbf7d0" stroke-opacity="0.75"/>
+    <rect x="313" y="690" width="26" height="26" rx="7" fill="url(#iconGreen)"/>
+    <g transform="translate(326,703)">
+      <rect class="icon" x="-8" y="-5" width="16" height="11" rx="2"/>
+      <path class="icon" d="M-4,-5 L-4,-8 L4,-8 L4,-5"/>
+    </g>
+    <text class="t main" x="346" y="695" font-size="12.5">K Task</text>
+    <text class="t sub" x="346" y="712" font-size="10">FlowExecutor</text>
+    <text class="t sub" x="346" y="726" font-size="10">流程推进</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="447" y="676" width="136" height="58" rx="10" fill="url(#cardGreen)" stroke="#bbf7d0" stroke-opacity="0.75"/>
+    <rect x="457" y="690" width="26" height="26" rx="7" fill="url(#iconGreen)"/>
+    <g transform="translate(470,703)">
+      <circle class="icon" r="8"/>
+      <path class="icon" d="M-2.5,-3 C-2.5,-5 2.5,-5 2.5,-2.5 C2.5,-0.5 0,-1 0,1"/>
+      <circle cx="0" cy="4.2" r="1.1" fill="#ffffff"/>
+    </g>
+    <text class="t main" x="490" y="695" font-size="12.5">L Clarify</text>
+    <text class="t sub" x="490" y="712" font-size="10">计划无效</text>
+    <text class="t sub" x="490" y="726" font-size="10">引导澄清</text>
+  </g>
+
+  <g>
+    <rect x="52" y="652" width="62" height="18" rx="9" fill="#fbbf24" stroke="#ffe6ae" stroke-width="1"/>
+    <text class="pill" x="83" y="665" text-anchor="middle">知识问答</text>
+    <rect x="196" y="652" width="62" height="18" rx="9" fill="#fbbf24" stroke="#ffe6ae" stroke-width="1"/>
+    <text class="pill" x="227" y="665" text-anchor="middle">闲聊</text>
+    <rect x="340" y="652" width="62" height="18" rx="9" fill="#fbbf24" stroke="#ffe6ae" stroke-width="1"/>
+    <text class="pill" x="371" y="665" text-anchor="middle">业务任务</text>
+    <rect x="484" y="652" width="62" height="18" rx="9" fill="#fbbf24" stroke="#ffe6ae" stroke-width="1"/>
+    <text class="pill" x="515" y="665" text-anchor="middle">无效</text>
+  </g>
+
+  <!-- F / M / 右侧卡片 -->
+  <g filter="url(#shadow)">
+    <rect x="630" y="418" width="360" height="58" rx="11" fill="url(#card)" stroke="#ffffff" stroke-opacity="0.45"/>
+    <rect x="642" y="432" width="30" height="30" rx="8" fill="url(#iconBlue)" stroke="#ffffff" stroke-opacity="0.5"/>
+    <g transform="translate(657,447)">
+      <path class="icon" d="M0,-8 L8,-4 L8,4 L0,8 L-8,4 L-8,-4 Z"/>
+      <path class="icon" d="M-8,-4 L0,0 L8,-4 M0,0 L0,8"/>
+    </g>
+    <text class="t main" x="685" y="443">F　写入 focused_object</text>
+    <text class="t sub" x="685" y="462">对象消息（账户 / 卡 / 交易 / 贷款）转成槽位</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <polygon points="810,520 960,580 810,640 660,580" fill="url(#diamond)" stroke="#ffe6ae" stroke-width="1.6"/>
+    <text class="dmain" x="810" y="570" text-anchor="middle" font-size="15">M　是否匹配当前 Task</text>
+    <text class="dmain" x="810" y="592" text-anchor="middle" font-size="15">正在收集的槽位？</text>
+  </g>
+
+  <g>
+    <rect x="664" y="588" width="48" height="18" rx="9" fill="#fbbf24" stroke="#ffe6ae" stroke-width="1"/>
+    <text class="pill" x="688" y="601" text-anchor="middle">匹配</text>
+    <rect x="892" y="588" width="58" height="18" rx="9" fill="#fbbf24" stroke="#ffe6ae" stroke-width="1"/>
+    <text class="pill" x="921" y="601" text-anchor="middle">不匹配</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="620" y="676" width="160" height="58" rx="10" fill="url(#cardGreen)" stroke="#bbf7d0" stroke-opacity="0.75"/>
+    <rect x="630" y="690" width="26" height="26" rx="7" fill="url(#iconGreen)"/>
+    <g transform="translate(643,703)">
+      <rect class="icon" x="-8" y="-5" width="16" height="11" rx="2"/>
+      <path class="icon" d="M-4,-5 L-4,-8 L4,-8 L4,-5"/>
+    </g>
+    <text class="t main" x="664" y="696" font-size="12.5">N Task</text>
+    <text class="t sub" x="664" y="715">SetSlots 补槽位</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="850" y="676" width="160" height="58" rx="10" fill="url(#cardGreen)" stroke="#bbf7d0" stroke-opacity="0.75"/>
+    <rect x="860" y="690" width="26" height="26" rx="7" fill="url(#iconGreen)"/>
+    <g transform="translate(873,703)">
+      <circle class="icon" r="8"/>
+      <path class="icon" d="M-2.5,-3 C-2.5,-5 2.5,-5 2.5,-2.5 C2.5,-0.5 0,-1 0,1"/>
+      <circle cx="0" cy="4.2" r="1.1" fill="#ffffff"/>
+    </g>
+    <text class="t main" x="894" y="696" font-size="13">O Clarify</text>
+    <text class="t sub" x="894" y="715">引导补充信息</text>
+  </g>
+
+  <!-- P/Q -->
+  <g filter="url(#shadow)">
+    <rect x="337" y="795" width="350" height="56" rx="11" fill="url(#card)" stroke="#ffffff" stroke-opacity="0.48"/>
+    <rect x="349" y="808" width="30" height="30" rx="8" fill="url(#iconBlue)" stroke="#ffffff" stroke-opacity="0.5"/>
+    <g transform="translate(364,823)">
+      <rect class="icon" x="-7" y="-8" width="14" height="16" rx="2"/>
+      <path class="icon" d="M-4,-4 L4,-4 M-4,0 L4,0"/>
+      <path class="icon" d="M-4,4 L0,6 L5,2"/>
+    </g>
+    <text class="t main" x="390" y="819">P　提交本轮记录</text>
+    <text class="t sub" x="390" y="838">把 Turn 追加到当前 Session</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="337" y="872" width="350" height="56" rx="11" fill="url(#card)" stroke="#ffffff" stroke-opacity="0.48"/>
+    <rect x="349" y="885" width="30" height="30" rx="8" fill="url(#iconBlue)" stroke="#ffffff" stroke-opacity="0.5"/>
+    <g transform="translate(364,900)">
+      <path class="icon" d="M-8,-6 L8,-1 L-2,2 L-4,8 Z"/>
+      <path class="icon" d="M-2,2 L8,-1"/>
+    </g>
+    <text class="t main" x="390" y="896">Q　返回 ProcessResult</text>
+    <text class="t sub" x="390" y="915">统一响应给前端：sender_id / message_id / messages</text>
+  </g>
+</svg>

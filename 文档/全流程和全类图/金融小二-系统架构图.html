@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>金融小二 · 系统架构图</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 1600px; height: 990px; overflow: hidden; }
+  body {
+    font-family: "Microsoft YaHei", "PingFang SC", "Segoe UI", sans-serif;
+    background: linear-gradient(135deg, #1d4ed8 0%, #4338ca 38%, #6d28d9 68%, #c026d3 100%);
+    color: #fff;
+  }
+  .stage { position: relative; width: 1600px; height: 990px; padding: 34px 44px 26px; }
+  .blob { position: absolute; border-radius: 50%; filter: blur(90px); opacity: .42; }
+  .b1 { width: 420px; height: 380px; background: #22d3ee; left: -120px; top: -120px; }
+  .b2 { width: 460px; height: 420px; background: #f472b6; right: -150px; bottom: -160px; }
+  .b3 { width: 320px; height: 300px; background: #818cf8; right: 80px; top: -120px; }
+  .dots { position: absolute; width: 190px; height: 170px; opacity: .5;
+    background-image: radial-gradient(#fff 1.3px, transparent 1.3px); background-size: 18px 18px; }
+  .d1 { right: 26px; top: 24px; }
+  .d2 { left: 22px; bottom: 22px; }
+
+  header { position: relative; display: flex; align-items: flex-end; justify-content: space-between; margin-bottom: 18px; }
+  h1 { font-size: 38px; font-weight: 800; letter-spacing: 1px; }
+  h1 span { color: #fde68a; }
+  .sub { margin-top: 8px; font-size: 14.5px; color: #dbeafe; letter-spacing: .5px; }
+  .kpis { display: flex; gap: 10px; margin-bottom: 6px; }
+  .kpi { background: rgba(255,255,255,.14); border: 1px solid rgba(255,255,255,.28);
+         border-radius: 12px; padding: 8px 14px; text-align: center; backdrop-filter: blur(6px); }
+  .kpi b { display: block; font-size: 20px; }
+  .kpi i { font-style: normal; font-size: 11px; color: #dbeafe; }
+
+  .layers { position: relative; display: flex; flex-direction: column; }
+  .layer { display: flex; gap: 14px; background: rgba(255,255,255,.10);
+           border: 1px solid rgba(255,255,255,.30); border-radius: 18px; padding: 14px 16px;
+           box-shadow: 0 10px 30px rgba(12,20,70,.22); backdrop-filter: blur(8px); }
+  .tag { width: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center;
+         writing-mode: vertical-rl; font-size: 15px; font-weight: 800; letter-spacing: 5px; }
+  .tag.access { background: linear-gradient(160deg,#60a5fa,#2563eb); }
+  .tag.engine { background: linear-gradient(160deg,#c084fc,#7c3aed); }
+  .tag.mid { background: linear-gradient(160deg,#fbbf24,#f59e0b); color: #4a2a00; }
+  .tag.infra { background: linear-gradient(160deg,#4ade80,#16a34a); color: #08351b; }
+  .body { flex: 1; min-width: 0; }
+
+  .row { display: flex; gap: 12px; }
+  .card { flex: 1; background: rgba(255,255,255,.13); border: 1px solid rgba(255,255,255,.30);
+          border-radius: 12px; padding: 12px 14px; }
+  .card h3 { font-size: 15px; margin-bottom: 6px; display: flex; align-items: center; gap: 8px; }
+  .card p { font-size: 12px; color: #e0ecff; line-height: 1.6; }
+  .ico { width: 24px; height: 24px; border-radius: 7px; display: inline-flex; align-items: center;
+         justify-content: center; font-size: 13px; background: rgba(255,255,255,.22); }
+  .note { margin-top: 10px; font-size: 11.5px; color: #dbeafe; display: flex; gap: 18px; flex-wrap: wrap; }
+  .note b { color: #fde68a; font-weight: 700; }
+
+  .link { height: 26px; display: flex; align-items: center; justify-content: center; gap: 10px;
+          font-size: 11.5px; color: #e6efff; }
+  .link::before, .link::after { content: ""; width: 120px; height: 1px; background: rgba(255,255,255,.35); }
+  .link em { font-style: normal; border: 1px solid rgba(255,255,255,.32); background: rgba(255,255,255,.10);
+             padding: 2px 10px; border-radius: 9px; letter-spacing: .5px; }
+
+  .flow { display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 12px; }
+  .node { background: rgba(255,255,255,.16); border: 1px solid rgba(255,255,255,.38);
+          border-radius: 10px; padding: 9px 14px; font-size: 13px; font-weight: 700; white-space: nowrap; }
+  .node small { display: block; font-size: 10px; font-weight: 400; color: #dbeafe; margin-top: 2px; }
+  .node.llm { background: linear-gradient(135deg,#fef3c7,#fcd34d); color: #4a2a00; border-color: #fde68a; }
+  .node.llm small { color: #6b4b00; }
+  .node.check { background: linear-gradient(135deg,#bbf7d0,#4ade80); color: #08351b; border-color: #bbf7d0; }
+  .node.check small { color: #14532d; }
+  .arrow { font-size: 17px; color: #e6efff; opacity: .9; }
+
+  .mods { display: grid; grid-template-columns: 1.35fr 1.08fr 1fr .88fr; gap: 12px; }
+  .mod { background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.30); border-radius: 12px; padding: 12px 14px; }
+  .mod h4 { font-size: 14px; margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between; }
+  .mod h4 span { font-size: 10px; font-weight: 400; color: #dbeafe; background: rgba(255,255,255,.14);
+                 border-radius: 7px; padding: 2px 7px; }
+  .mod li { list-style: none; font-size: 11.5px; color: #e0ecff; line-height: 1.85; display: flex; gap: 6px; }
+  .mod li::before { content: "•"; color: #fde68a; }
+
+  .domains { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
+  .domain { background: rgba(255,255,255,.14); border: 1px solid rgba(255,255,255,.32); border-radius: 9px;
+            padding: 9px 6px; text-align: center; font-size: 12.5px; font-weight: 700; }
+  .domain small { display: block; font-size: 9.5px; font-weight: 400; color: #e0ecff; margin-top: 2px; }
+  .midwrap { display: flex; gap: 12px; }
+  .midleft { flex: 1; }
+  .contract { width: 330px; background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.30);
+              border-radius: 12px; padding: 12px 14px; }
+  .contract h4 { font-size: 14px; margin-bottom: 7px; }
+  .contract li { list-style: none; font-size: 11.5px; line-height: 1.85; color: #e0ecff; }
+  .contract li b { color: #fde68a; }
+
+  .caps { display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; }
+  .cap { background: rgba(255,255,255,.13); border: 1px solid rgba(255,255,255,.30); border-radius: 10px;
+         padding: 10px 8px; text-align: center; font-size: 12px; }
+  .cap b { display: block; font-size: 12.5px; margin-bottom: 3px; }
+  .cap span { font-size: 10px; color: #dbeafe; }
+
+  footer { display: flex; justify-content: center; gap: 26px; margin-top: 13px; font-size: 12px; color: #e6efff; }
+  footer b { color: #fde68a; }
+</style>
+</head>
+<body>
+<div class="stage">
+  <div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div>
+  <div class="dots d1"></div><div class="dots d2"></div>
+
+  <header>
+    <div>
+      <h1>金融<span>小二</span> · 智能客服系统架构</h1>
+      <div class="sub">三层解耦 · 流程配置化 · LLM 只做规划 · 校验与执行确定性 · 全链路可观测</div>
+    </div>
+    <div class="kpis">
+      <div class="kpi"><b>9</b><i>业务域</i></div>
+      <div class="kpi"><b>100</b><i>中台接口</i></div>
+      <div class="kpi"><b>7</b><i>业务流程</i></div>
+      <div class="kpi"><b>19</b><i>知识意图</i></div>
+      <div class="kpi"><b>58</b><i>CI 测试</i></div>
+    </div>
+  </header>
+
+  <div class="layers">
+    <!-- 接入层 -->
+    <div class="layer">
+      <div class="tag access">接入层</div>
+      <div class="body">
+        <div class="row">
+          <div class="card">
+            <h3><span class="ico">💻</span>客户 H5</h3>
+            <p>12 个页面：首页、对话、我的账户、交易明细、信用贷款、我的工单</p>
+          </div>
+          <div class="card">
+            <h3><span class="ico">📊</span>员工工作台</h3>
+            <p>数据大盘、客户视图、贷款审批、工单处理、客户详情</p>
+          </div>
+          <div class="card">
+            <h3><span class="ico">🔌</span>接口入口</h3>
+            <p><b>POST /api/chat</b> · /api/chat/history · /api/portal/*</p>
+          </div>
+        </div>
+        <div class="note">
+          <span><b>统一身份</b> X-Customer-No · X-Employee-No</span>
+          <span><b>渠道与操作人</b> X-Channel-Code · X-Operator-No</span>
+          <span><b>追踪</b> X-Request-Id 全链路透传</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="link"><em>HTTP · JSON · X-Request-Id</em></div>
+
+    <!-- 对话引擎层 -->
+    <div class="layer">
+      <div class="tag engine">引擎层</div>
+      <div class="body">
+        <div class="flow">
+          <div class="node">用户消息<small>文本 / 对象</small></div>
+          <div class="arrow">→</div>
+          <div class="node">DialogueEngine<small>Session · Turn</small></div>
+          <div class="arrow">→</div>
+          <div class="node llm">TurnPlanner<small>LLM 意图规划</small></div>
+          <div class="arrow">→</div>
+          <div class="node check">TurnPlanValidator<small>FlowCatalog + State</small></div>
+          <div class="arrow">→</div>
+          <div class="node">三路路由<small>task / knowledge / chitchat</small></div>
+        </div>
+        <div class="mods">
+          <div class="mod">
+            <h4>TaskHandler <span>业务流程</span></h4>
+            <ul>
+              <li>FlowExecutor 步骤机：Start → Collect → Action → Response → End</li>
+              <li>FlowCatalog：7 条 YAML 流程，条件跳转 / fallback</li>
+              <li>ActionRegistry：6 个自定义动作，pkgutil 自动注册</li>
+              <li>ActionRunner → 中台接口，Jinja2 渲染回复</li>
+            </ul>
+          </div>
+          <div class="mod">
+            <h4>KnowledgeHandler <span>知识问答</span></h4>
+            <ul>
+              <li>19 类知识意图，按意图选择 Provider</li>
+              <li>FAQ 20 条种子数据 + 可配置 RAG 检索</li>
+              <li>Prompt 统一拼装，引用资料作答</li>
+              <li>检索为空 → 确定性兜底，不编造</li>
+            </ul>
+          </div>
+          <div class="mod">
+            <h4>DialogueState <span>会话状态</span></h4>
+            <ul>
+              <li>sessions / turns 多轮记录</li>
+              <li>active task / slots 流程上下文</li>
+              <li>focused_object 槽位映射</li>
+              <li>整段 JSON 持久化 MySQL</li>
+            </ul>
+          </div>
+          <div class="mod">
+            <h4>Clarify / ChitChat <span>兜底</span></h4>
+            <ul>
+              <li>计划无效 → 澄清追问</li>
+              <li>对象不匹配 → 引导补充</li>
+              <li>闲聊独立回复链</li>
+              <li>异常不抛 500，转可读话术</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="link"><em>ActionRunner · httpx · request_no 幂等</em></div>
+
+    <!-- 业务中台层 -->
+    <div class="layer">
+      <div class="tag mid">中台层</div>
+      <div class="body">
+        <div class="midwrap">
+          <div class="midleft">
+            <div class="domains">
+              <div class="domain">客户<small>开户 / 资料 / 层级</small></div>
+              <div class="domain">账户<small>余额 / 冻结</small></div>
+              <div class="domain">交易<small>流水 / 汇总</small></div>
+              <div class="domain">贷款<small>申请 / 审批 / 放款</small></div>
+              <div class="domain">还款<small>计划 / 试算</small></div>
+              <div class="domain">理财<small>产品 / 申购赎回</small></div>
+              <div class="domain">风控<small>评分 / 名单</small></div>
+              <div class="domain">催收<small>任务 / 跟进</small></div>
+              <div class="domain">运营<small>仪表盘 / 配置</small></div>
+              <div class="domain">其余接口<small>共 100 个</small></div>
+            </div>
+          </div>
+          <div class="contract">
+            <h4>统一契约</h4>
+            <ul>
+              <li><b>响应体</b> code / message / request_id / data</li>
+              <li><b>错误码</b> 字符串业务码 + HTTP 4xx/5xx</li>
+              <li><b>幂等</b> request_no 首次执行、重放返回缓存</li>
+              <li><b>鉴权</b> Bearer 客户号 / 员工号 + 渠道头</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="link"><em>SQL · 连接池 · 事务</em></div>
+
+    <!-- 基础设施层 -->
+    <div class="layer">
+      <div class="tag infra">基础设施</div>
+      <div class="body">
+        <div class="caps">
+          <div class="cap"><b>MySQL 8</b><span>业务库 · 会话状态 · 审计</span></div>
+          <div class="cap"><b>通义千问</b><span>意图规划 · 回复生成</span></div>
+          <div class="cap"><b>RAG 知识库</b><span>FAQ 种子 · 可插拔检索</span></div>
+          <div class="cap"><b>可观测</b><span>JSON 日志 · 请求 ID · Prometheus</span></div>
+          <div class="cap"><b>治理</b><span>限流 · 审计表 · 幂等</span></div>
+          <div class="cap"><b>CI 门禁</b><span>ruff · pytest · 58 条</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <span><b>LLM 只做规划</b>，执行路径由配置与状态决定</span>
+    <span><b>失败转澄清</b>，不让模型异常直接变 500</span>
+    <span><b>槽位三级取值</b> active → focused_object → 追问</span>
+    <span><b>写接口幂等</b>，重复提交不重复建单</span>
+  </footer>
+</div>
+</body>
+</html>
